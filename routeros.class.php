@@ -1,5 +1,13 @@
 <?
 
+/*
+  Author: Kamil Trzcinski
+  E-mail: ayufan(at)osk-net(dot)pl
+  WWW: http://www.ayufan.eu
+  SVN: https://svn.osk-net.pl:444/rosapi (login: guest)
+  License: http://www.gnu.org/licenses/gpl.html
+*/
+
 class RouterOS
 {
 	private $sock;

@@ -12,13 +12,14 @@ pre.code {
 Author: Kamil Trzcinski
 E-mail: ayufan(at)osk-net(dot)pl
 WWW: <a href="http://www.ayufan.eu">http://www.ayufan.eu</a>
-SVN: <a href="https://guest@svn.osk-net.pl:444/rosapi">https://svn.osk-net.pl:444/rosapi</a> (login: guest)</pre>
+SVN: <a href="https://guest@svn.osk-net.pl:444/rosapi">https://svn.osk-net.pl:444/rosapi</a> (login: guest)
+License: <a href="http://www.gnu.org/licenses/gpl.html">GPL</a></pre>
 <H2>Purpose</H2>
 <p>The main purpose of another RouterOS PHP API class it to simplify configuration update processes. Example: We have about 20 access points and for each of them we have connected about 20 wds links. Using automatic configuration process we can store information about all wds links in one place. It can be MySQL database.</p>
 <p>Using set of configuration files router's can be divided into function groups (ie. router, main-access-point, client-access-point, switch) and be configured from central server automatically. ONLY changed configuration will be updated, so in most cases no configuration will change.</p>
 
 <H2>Requirements</H2>
-<p>Requires a very good knowledge of RouterOS configuration tree.</p>
+<p>Requires a very good knowledge of RouterOS configuration tree, PHP Runtime and API access to RouterOS.</p>
 
 <H2>RouterOS class</H2>
 <H3>General</H3>
@@ -35,14 +36,14 @@ SVN: <a href="https://guest@svn.osk-net.pl:444/rosapi">https://svn.osk-net.pl:44
   <li>space delimeted string: <pre>chain=forward action=drop in-interface=ether1</pre></li>
   <li>associative array of string: <pre>array("chain"=>"forward", "action"=>"drop", "in-interface"=>"ether1")</pre></li>
 </ul>
-<H3>Variables</H3>
+<H3>Class Variables</H3>
 <ul>
   <li>
     <b>public $readOnly = FALSE;</b>
     <p>Read-only flag. If set to TRUE: RouterOS class will not change nor remove any item.</p>
   </li>
 </ul>
-<H3>Methods</H3>
+<H3>Class Methods</H3>
 <ul>
   <li>
     <p class="name">static function connect($host, $login, $password, $port = 8728, $timeout = 5)</p>
@@ -68,7 +69,7 @@ SVN: <a href="https://guest@svn.osk-net.pl:444/rosapi">https://svn.osk-net.pl:44
         (
             [.id] => *2
             [interface] => ap11
-            [mac-address] => 00:1F:1F:44:3F:18
+            [mac-address] => 00:1F:1F:XX:XX:XX
             [ap] => true
             [wds] => true
             [rx-rate] => 11Mbps
@@ -97,8 +98,8 @@ SVN: <a href="https://guest@svn.osk-net.pl:444/rosapi">https://svn.osk-net.pl:44
         (
             [.id] => *7
             [interface] => backbone
-            [radio-name] => 000E8E228051
-            [mac-address] => 00:0C:42:3A:DB:17
+            [radio-name] => XXXX
+            [mac-address] => 00:0C:42:XX:XX:XX
             [ap] => true
             [wds] => true
             [rx-rate] => 54Mbps*2
@@ -134,18 +135,18 @@ SVN: <a href="https://guest@svn.osk-net.pl:444/rosapi">https://svn.osk-net.pl:44
     <pre class="code">$conn->getall(array("interface", "wireless", "registration-table"), array(".id", "interface", "mac-address"), FALSE, "mac-address");</pre>
     <pre>Array
 (
-    [00:1F:1F:44:3F:18] => Array
+    [00:1F:1F:XX:XX:XX] => Array
         (
             [.id] => *2
             [interface] => ap11
-            [mac-address] => 00:1F:1F:44:3F:18
+            [mac-address] => 00:1F:1F:XX:XX:XX
         )
 
-    [00:0C:42:3A:DB:17] => Array
+    [00:0C:42:XX:XX:XX] => Array
         (
             [.id] => *7
             [interface] => backbone
-            [mac-address] => 00:0C:42:3A:DB:17
+            [mac-address] => 00:0C:42:XX:XX:XX
         )
 )</pre>
   </li>
@@ -239,3 +240,308 @@ SVN: <a href="https://guest@svn.osk-net.pl:444/rosapi">https://svn.osk-net.pl:44
 </ul>
 
 <H2>RouterOSParser class</H2>
+<H3>General</H3>
+<p>Parser class to load configuration from file and perform differencing configuration update.</p>
+<p>Parser output should be shown in text/plain content-type!</p>
+<H4>Order of sections defines order of configuration updates.</H4>
+<H3>How it works</H3>
+<ul>
+  <li>For each section: <b>getall</b> items from RouterOS</li>
+  <li>ignore all dynamic entries, remove all invalid entries</li>
+  <li>try to classify RouterOS item to either ignore or to pass list</li>
+  <li>try to match RouterOS item with local item using defined <b>keys</b>, if no match found remove, if match found update only what changed</li>
+  <li>reorder RouterOS item list</li>
+  <li>add not found items to RouterOS</li>
+</ul>
+<H3>Script</H3>
+<H4>Line</H4>
+<p>One line is one command. Command can be either: comment, flow function, include function, user function definer or configurer function. Each line is firstly trimmed from whitespaces.</p>
+<H4>Comments</H4>
+<p>Comment can only by started from new line and after # char. Before # can be zero or more whitespaces. <b>Comment can't be added after command!</b></p>
+<pre class="example"># Sample comment</pre>
+<H4>Variables</H4>
+<p>To use variable add % before and after variable name: To get value of <b>my-variable</b>:</p>
+<pre class="example">%my-variable%</pre>
+<p>To define variable in script use <b>var</b> keyword</p>
+<pre class="code">var [variable-name] [variable-value]</pre>
+<pre class="example">var my-variable test-variable</pre>
+<pre class="example">var my-variable test-variable-using-previous-value-of-my-variable-%my-variable%</pre>
+<H4>Flow functions</H4>
+  <p>In script files there are a few flow functions: if, elseif, else, endif. Flow functions can be nested. One flow block if-else-endif has to be located in ONE file. So simply You can't start flow block in one file and end it in another.</p>
+  <pre class="name">if [left-value] [operator] [right-value]
+# [commands execute when first comparision is true] ...
+elseif [left-value] [operator] [right-value]
+# [commands execute when second comparision is true] ...
+else
+# [commands execute when neither first nor second comparision is true] ...
+endif
+</pre>
+    <p class="desc">left-value, right-value - either string or variable</p>
+    <pre class="example">if %version% ~= 4.*
+# execute commands for version 4.*
+else
+# execute commands for all other versions 4.*</pre>
+  </li>
+</ul>
+<H4>Operators</H4>
+<ul>
+  <li><b>=</b> - left is equal right</li>
+  <li><b>!=</b> - left is not equal tight</li>
+  <li><b>&lt;</b> - left is less than right</li>
+  <li><b>&lt;=</b> - left is less or equal right</li>
+  <li><b>&gt;</b> - left is greater than right</li>
+  <li><b>&gt;=</b> - left is greater or equal right</li>
+  <li><b>~=</b> - right is wildcardly equal left (using fnmatch from php)</li>
+  <li><b>!~=</b> - right is wildcardly not equal left (using fnmatch from php)</li>
+</ul>
+<H4>Including files</H4>
+<p>Script file can include another file and parse it in place. Current file path is used to include file. Each file can be included more than once.</p>
+<pre class="code">include [file-name] [file-name-2] ...</pre>
+<p>Includes list of files only if files exists. If file doesn't exist parser will continue.</p>
+<pre class="code">require [file-name] [file-name-2] ...</pre>
+<p>Require list of files. If file doesn't parser will return with error.</p>
+<H4>Other commands</H4>
+<ul>
+  <li>
+    <pre class="code">set [alias] [key=value] [key2=value2]...</pre>
+    <pre class="code">add [alias] [key=value] [key2=value2]...</pre>
+    <p>Set or add (synonims) config line.</p>
+  </li>
+  <li>
+    <pre class="code">function [cmd-name] [$arg1] [$arg2=$default2]...
+# function body
+endfunction</pre>
+    <p>Add new user php function. Always in defined function first argument is $parser to access current parser context.</p>
+    <pre class="example">function my_first_function $srcaddress $dstaddress="1.2.3.4"
+# do some crazy stuff with $parser.
+endfunction</pre>
+  </li>
+  <li>
+    <pre class="code">ignore [alias] [key=value] [key2=value2]...</pre>
+    <pre class="code">pass [alias] [key=value] [key2=value2]...</pre>
+    <p>Add ignore or pass config line. See RouterOSParser::ignore or RouterOSParser::pass functions.</p>
+  </li>
+  <li>  
+    <pre class="code">flush [alias] [alias2]...</pre>
+    <p>Clean all configuration for specified alias!</p>
+  </li>
+  <li>
+    <pre class="code">section [alias] [cmd] [type] [keys or false] [default_key=default_value]...</pre>
+    <p>Add new section <b>alias</b> of <b>type</b> to configuration update with comma delimeted group <b>keys</b> and list of <b>default_key</b>. See RouterOSParser::section function.</p>
+    <pre class="example">section firewall-filter /ip/firewall/filter addset_order</pre>
+    <pre class="example">section wireless-wds /interface/wireless/wds addset name disabled=no</pre>
+  </li>  
+  <li>  
+    <pre class="code">disable [alias] [alias2]...</pre>
+    <p>Remove section from configuration update.</p>
+    <pre class="example">disable firewall-filter queue-tree</pre>
+  </li>  
+  <li>  
+    <pre class="code">[cmd-name] [arg1] [arg2]...</pre>
+    <p>Execute user defined function with args.</p>
+    <pre class="example">my_first_function 192.168.10.1 192.168.10.254</pre>
+  </li>    
+</ul>
+<H3>Section Types</H3>
+<p>To perform automatic update updater has to know what type of data to expect. Proper section type has to be specified.</p>
+<ul>
+  <li><b>addset</b> - add, set or remove items (where .id is specified for an item) in unspecified order (ie. /queue/tree, /queue/types...)</li>
+  <li><b>addset_order</b> - add, set or remove items where order of items matters(ie. /ip/firewall/filter, /queue/simple, /ip/dns/static...)</li>
+  <li><b>set</b> - only set items (where .id is specified for an item), don't remove or add an new one (ie. /interface, /queue/interface...)</li>
+  <li><b>value</b> - only set variables (where are values not items) (ie. /ip/firewall/connection/tracking, /ip/dns)
+</ul>
+<H3>Class Variables</H3>
+<ul>
+  <li>
+    <p class="name">public $logs = array();</p>
+    <p class="desc">Array of logs from section update.</p>
+  </li>
+  <li>
+    <p class="name">public $showIgnored = FALSE;</p>
+    <p class="desc">Whatever to show in logs items which found to be "ignore" or "pass".</p>
+  </li>
+  <li>
+    <p class="name">public $currentContext;</p>
+    <p class="desc">Information about current processed line (can be accessed from user php functions).</p>
+  </li>
+</ul>
+<H3>Class Methods</H3>
+<ul>
+  <li>
+    <p class="name">function error($message)</p>
+    <p class="desc">DIE execution with specified error message.</p>
+  </li>
+  <li>
+    <p class="name">function define($key, $value = FALSE)</p>
+    <p class="desc">Define or undefine script variable: %key%</p>
+  </li>
+  <li>
+    <p class="name">function variable($key)</p>
+    <p class="desc">Get value of script variable: %key%</p>
+  </li>
+  <li>
+    <p class="name">function replace($value)</p>
+    <p class="desc">Replace string using script variables</p>
+    <pre class="code">$parser->define('var', 'test-of-var');</pre>
+    <pre class="code">$parser->replace('string of variable: %var%');</pre>
+    <pre class="example">"string of variable: test-of-var"</pre>
+  </li>
+  <li>
+    <p class="name">function config($cmd, $line)</p>
+    <p class="desc">Add or set config for specified short command.</p>
+    <pre class="code">$parser->config("firewall-filter", "action=drop chain=forward");</pre>
+    <pre class="code">$parser->config("firewall-filter", array("action"=>"drop", "chain"=>"forward"));</pre>
+    <pre class="code">$parser->config("connection-tracking", "enabled=no");</pre>
+  </li>  
+  <li>
+    <p class="name">function ignore($cmd, $line)</p>
+    <p class="desc">Ignore specified item from synchronization. Has precedence before "pass". Muliple ignore or pass rules can be added.</p>
+    <pre class="code">$parser->ignore("firewall-filter", "chain=forward"); // doesn't synchronize rules from chain "forward"</pre>
+  </li>
+  <li>
+    <p class="name">function pass($cmd, $line)</p>
+    <p class="desc">Pass only specified item to synchronization. Muliple ignore or pass rules can be added.</p>
+    <pre class="code">$parser->pass("firewall-filter", "chain=forward"); // synchronize ONLY rules from chain "forward"</pre>
+  </li>
+  <li>
+    <p class="name">function section($alias, $cmd, $type, $keys = FALSE, $defaults = FALSE) </p>
+    <p class="desc">Add a section to synchronization.</p>
+    <p><b>alias</b> - short alias of section</p>
+    <p><b>cmd</b> - RouterOS command</p>
+    <p><b>type</b> - type of section. See Types of section.</p>
+    <p><b>keys</b> - list of keys to perform differencing synchronization.</p>
+    <p><b>defaults</b> - list of default values.</p>
+    <pre class="code">$parser->section("firewall-filter", "/ip/firewall/filter", "addset_order", FALSE, "disabled=no"); // ordered list of items without <b>key</b> and default not disabled</pre>
+    <pre class="code">$parser->section("wireless-wds", "/interface/wireless/wds", "addset", "name", "disabled=no"); // unordered list of items with interface name as key and default not disabled</pre>
+    <pre class="code">$parser->section("interface-queue", "/queue/interface", "set", "name"); // only settable list of items with interface name as key</pre>    
+    <pre class="code">$parser->section("dns", "/ip/dns", "value"); // value section</pre>
+  </li>
+  <li>
+    <p class="name">function cmd($alias, $cmd)</p>
+    <p class="desc">Defines user php function with at least one arg: <b>$parser</b>.</p>  
+    <pre class="code">function parser_test_function($parser, $srcaddress, $dstaddress) {
+  $parser->config("firewall-filter", "chain=forward action=drop src-address=$srcaddress dst-address=$dstaddress");
+  return TRUE;
+}
+$parser->cmd("test_function", parser_test_function);</pre>
+  </li>
+  <li>
+    <p class="name">function parseFile($file)</p>
+    <p class="desc">Parse text from file. If $file is array parse line of array as command.</p>
+    <pre class="code">$parser->parseFile("my_config_file.cfg");</pre>
+    <pre class="code">$parser->parseFile(array("config line 1", "config line 2", "config line 3"));</pre>
+  </li>
+  <li>
+    <p class="name">function call($cmd, $args)</p>
+    <p class="desc">Execute defined function with specified args as array in current parser context. Returns function return value.</p>
+    <pre class="code">$parser->call("test_function", array("192.168.10.1", "1.2.3.4"));</pre>
+  </li>
+  </li>
+  <li>
+    <p class="name">function updateSection($conn, $alias)</p>
+    <p class="desc">Perform specified section $alias update for specified RouterOS $conn connection. All update logs are in $parser->logs.</p>
+    <pre class="code">$parser->updateSection($conn, "firewall-filter");</pre>
+  </li>
+  <li>
+    <p class="name">  function update($conn, $ret = FALSE)</p>
+    <p class="desc">Perform update of all sections for specified RouterOS $conn connection. All logs are either flushed on stdout or returned if $ret is TRUE.</p>
+    <pre class="code">$parser->update($conn);</pre>
+  </li>  
+</ul>
+<H3>Example</H3>
+<H4>execute_script.php</H4>
+<pre class="code">
+&lt;?
+
+require_once("routerosparser.class.php");
+
+header("Content-Type: text/plain");
+
+// connect to device
+$conn = RouterOS::connect("192.168.10.11", "admin", "adminpassword") or die("couldn't connect to 192.168.10.11");
+$resource = $conn->getall(array("system", "resource")) or die("couldn't get resource;
+
+// create class and define device information
+$parser = new RouterOSParser();
+$parser->variable("name", "MikroTik");
+$parser->variable("version", $resource["version"]);
+$parser->variable("arch", $resource["architecture-name"]);
+
+// define function
+function allowConnectivity($parser, $srcaddress, $dstaddress) {
+  if(!$srcaddress || !$dstaddress)
+    $parser->error("src or dst not specified");
+  $parser->config("firewall-filter", "chain=forward src-address=$srcaddress dst-address=$dstaddress action=accept");
+  $parser->config("firewall-filter", "chain=forward src-address=$dstaddress dst-address=$srcaddress action=accept");
+}
+$parser->cmd('allow-forward', allowConnectivity);
+
+$parser->section("firewall-filter", "/ip/firewall/filter", "addset_order"); // add firewall-filter 
+$parser->pass("firewall-filter", "chain=forward"); // update ONLY forward chain
+
+$parser->parseFile("example_config.cfg"); // load configuration
+
+$parser->update($conn); // perform update
+
+?&gt;
+</pre>
+
+<H4>example_config.cfg</H4>
+<pre class="code">
+# load predefined global OSPF configuration
+require ospf.cfg
+
+# set device name, clock and ntp-client
+section identity /system/identity value
+section clock /system/clock value
+section ntp-client /system/ntp/client value
+set identity name=%name%
+set clock time-zone-name=Europe/Warsaw
+set ntp-client enabled=true mode=unicast primary-ntp=192.168.10.5 secondary-ntp=192.168.10.6
+
+# of course in later part of configuration you can change configuration
+set ntp-client enabled=false
+
+# custom commands
+add firewall-filter in-interface=ether1 out-interface=ether2 chain=forward action=drop
+
+# allow forward for a few clients
+allow-forward 192.168.1.1 192.168.10.5
+allow-forward 192.168.1.5 192.168.10.5
+allow-forward 192.168.1.10 192.168.10.5
+
+# define your own function
+function allow-interface $interface
+  if(!$interface)
+    $parser->error("interface not specified");
+  $parser->config("firewall-filter", "in-interface=$interface chain=forward action=accept");
+  $parser->config("firewall-filter", "out-interface=$interface chain=forward action=accept");
+endfunction
+
+allow-interface ether1
+allow-interface ether2
+</pre>
+
+<H4>ospf.cfg</H4>
+<pre class="code">
+# check RouterOS version and configure differently
+if %version% ~= 3.*
+        section ospf /routing/ospf value
+        set ospf router-id=192.168.10.%% distribute-default=never redistribute-connected=as-type-2 redistribute-static=as-type-2 redistribute-rip=no redistribute-bgp=no metric-default=2 metric-connected=2 metric-static=1 metric-rip=1 metric-bgp=1
+else
+        section ospf-instance /routing/ospf/instance addset name
+        add ospf-instance name=default router-id=192.168.10.%% distribute-default=never redistribute-connected=as-type-2 redistribute-static=as-type-2 redistribute-rip=no redistribute-bgp=no metric-default=2 metric-connected=2 metric-static=1 metric-rip=1 metric-bgp=1
+endif
+
+# add sections for ospf configuration
+section ospf-area /routing/ospf/area addset name,area-id
+section ospf-interface /routing/ospf/interface addset interface
+section ospf-network /routing/ospf/network addset network
+section ospf-area-range /routing/ospf/area/range addset area,range
+
+# add configuration
+add ospf-area name=backbone area-id=0.0.0.0 type=default disabled=false
+add ospf-interface interface=private cost=10 priority=10 authentication=md5 authentication-key=MagicPassword network-type=broadcast retransmit-interval=00:00:10 transmit-delay=00:00:04 hello-interval=00:00:20 dead-interval=00:01:00
+add ospf-network network=192.168.10.0/24 area=backbone disabled=false
+
+</pre>
