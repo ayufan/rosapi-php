@@ -116,6 +116,8 @@ class RouterOS
 		return NULL;
 	}
 	
+  //! Set stream timeout
+  //! @params timeout stream timeout
 	public function setTimeout($timeout = 5) {
 		return stream_set_timeout($this->sock, $timeout);
 	}
@@ -170,11 +172,11 @@ class RouterOS
 	}
 	
 	//! Get all values
-	//! @params cmd from where get all data, ie. "/ip/firewall" or array("ip", "firewall")
-	//! @params proplist what values to get, ie. FALSE or "chain,action" or array("chain", "action")
+	//! @params cmd from where to get all data, ie. using string: "/ip/firewall" or using: array("ip", "firewall")
+	//! @params proplist list of values to get, ie. FALSE to get all or using comma delim string: "chain,action" or using: array("chain", "action")
 	//! @params args additional arguments to request
-	//! @params assoc association key instead of array indexes
-	//! @returns list of items of list of values or FALSE
+	//! @params assoc name of assoc key which is used instead of next array indexes
+	//! @returns list of items or FALSE if failed
 	function getall($cmd, $proplist = FALSE, $args = array(), $assoc = FALSE) {
 		$this->send($cmd, 'getall', $proplist, $args);
 
@@ -219,7 +221,7 @@ class RouterOS
 	}
 	
 	//! Set value
-	//! @params cmd what to set, ie. "/ip/firewall/filter" or array("ip", "firewall", "filter")
+	//! @params cmd what to set, ie. using string: "/ip/firewall/filter" or using: array("ip", "firewall", "filter")
 	//! @params args array of values to set, ie. array(".id" => "*8", "action" => "drop")
 	//! @returns TRUE or FALSE
 	function set($cmd, $args = array()) {
@@ -282,7 +284,7 @@ class RouterOS
 	}
 	
 	//! Download url on router
-	//! @params url url, ie. http://ftp.task.gda.pl/ls-lR
+	//! @params url url to fetch, ie. http://ftp.task.gda.pl/ls-lR
 	//! @returns TRUE or FALSE
 	function fetchurl($url) {
 		$finished = FALSE;
@@ -363,8 +365,8 @@ class RouterOS
 	
 	//! Add a new item
 	//! @params cmd where to add, ie. "/ip/firewall/filter" or array("ip", "firewall", "filter")
-	//! @params args array of values to set, ie. array(".id" => "*8", "action" => "drop")
-	//! @returns TRUE or FALSE	
+	//! @params args array of values to set, ie. array("action" => "drop")
+	//! @returns either new ".id" or TRUE or FALSE if failed
 	function add($cmd, $args = array()) {
 		if($this->readOnly)
 			return TRUE;
@@ -433,6 +435,10 @@ class RouterOS
 		}
 	}
 	
+  //! Perform wireless scan for specified interface with specified duration
+  //! @params id .id of interface to scan
+  //! @params duration time of scanning
+  //! @returns array of found wireless networks, where key is network BSSID
 	function scan($id, $duration="00:02:00") {
 		$this->send('/interface/wireless', 'scan', FALSE, array('.id' => $id, 'duration' => $duration));
 

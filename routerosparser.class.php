@@ -9,15 +9,22 @@ class RouterOSParser
 	private $passList = array();
 	private $vars = array();
 	private $vars_keys = array(), $vars_values = array();
+  
+  //! Array of logs
 	public $logs = array();
+  
+  //! Show ignored updates
 	public $showIgnored = FALSE;
 	
+  //! Current parser context (file[line])
 	public $currentContext = "--internal--";
 	
+  //! Prints error message 
 	function error($message) {
 		die($this->currentContext." : $message\n");
 	}
-	
+
+  //! Defines new value
 	function define($key, $value = FALSE) {
 		if($value)
 			$this->vars["%$key%"] = $value;
@@ -27,6 +34,7 @@ class RouterOSParser
 		$this->vars_values = array_values($this->vars);
 	}
 
+  //! Returns value
 	function variable($key) {
 		return $this->vars["%$key%"];
 	}
@@ -35,6 +43,7 @@ class RouterOSParser
 		return $count ? split("[ \t]+", $line, $count) : split("[ \t]+", $line);
 	}
 	
+  //! Replaces string with values
 	function replace($value) {
 		return stripcslashes(str_replace($this->vars_keys, $this->vars_values, $value));
 	}
@@ -65,6 +74,10 @@ class RouterOSParser
 		}
 	}
 	
+  //! Addes config line for specified named command
+  //! @params cmd short section line
+  //! @params line string: "action=drop chain=filter" or array("action"=>"drop", "chain"=>"filter")
+  //! @returns always TRUE of dies with error
 	function config($cmd, $line, $explode = FALSE) {
 		if(!isset($this->sectionList[$cmd]))
 			$this->error("add : $cmd : section doesn't exist!"); 
@@ -97,6 +110,7 @@ class RouterOSParser
 		return TRUE;
 	}
 	
+  //! Addes config line to ignore section of named command <see>config</see>
 	function ignore($cmd, $line, $explode = FALSE) {
 		if(!isset($this->sectionList[$cmd]))
 			$this->error("ignore : $cmd : section doesn't exist");
@@ -104,6 +118,7 @@ class RouterOSParser
 		$ignore[] = $this->explodeString($line, $explode);
 	}
 	
+  //! Addes config line to pass section of named command <see>config</see>
 	function pass($cmd, $line, $explode = FALSE) {
 		if(!isset($this->sectionList[$cmd]))
 			$this->error("pass : $cmd : section doesn't exist");
@@ -111,6 +126,16 @@ class RouterOSParser
 		$pass[] = $this->explodeString($line, $explode);
 	}
 	
+  //! Added section
+  //! @params alias short section name
+  //! @params cmd full command name, ie. using string: "/ip/firewall" or array("ip", "firewall")
+  //! @params type type of section: \
+  //!   value - contains only settable values (/ip/firewall/connection/tracking) \
+  //!   set - contains list of items with .id (/queue/interface) \
+  //!   addset - contains list of items which can be added or deleted (/queue/tree)\
+  //!   addset_order - contains order list of items which can be added or deleted (/queue/simple)
+  //! @params keys comma delimeted list of key values to identify differencing configuration synchronization
+  //! @params defaults list of default values, ie.: using string: "disabled=no mtu=1496" or using: array("disabled"=>"no", "mtu"=>"1496")
 	function section($alias, $cmd, $type, $keys = FALSE, $defaults = FALSE) {
 		if(!$alias)
 			$this->error("section : undefined alias");
@@ -129,6 +154,7 @@ class RouterOSParser
 		$this->sectionList[$alias] = $section;
 	}
 	
+  //! Defines php command for alias
 	function cmd($alias, $cmd) {
 		$this->cmdList[$alias] = $cmd;
 	}
@@ -150,6 +176,9 @@ class RouterOSParser
 		}
 	}
 
+  //! Parses file
+  //! @params file filename to load
+  //! @returns TRUE if successful
 	function parseFile($file) {
 		$levels = array();
 		$skip = FALSE;
@@ -316,6 +345,7 @@ class RouterOSParser
 		return TRUE;
 	}
 	
+  //! Executes defined php command with args
 	function call($cmd, $args) {
 		if(!isset($this->cmdList[$cmd]))
 			$this->error("call : $cmd : undefined function");
@@ -587,6 +617,10 @@ class RouterOSParser
 		}		
 	}
 
+  //! Performs section update
+  //! @params conn connection object
+  //! @params alias short section name
+  //! @returns TRUE if successful
 	function updateSection($conn, $alias) {
 		if(!isset($this->sectionList[$alias]))
 			return FALSE;
@@ -614,7 +648,10 @@ class RouterOSParser
 				die("updateSection(${sectionList['cmd']}): invalid type: $type");
 		}
 	}
-	
+
+  //! Performs full update
+  //! @params conn connection object
+  //! @params ret whatever print messages to stdout or return it
 	function update($conn, $ret = FALSE) {
 		$logs = FALSE;
 
