@@ -6,8 +6,6 @@ class RouterOS
 	private $tags;
 	private $where;
 	
-	//! Enable readonly flag
-	//! Methods that adds/sets/moves data have no effect.
 	public $readOnly = FALSE;
 	
 	private function writeSock($cmd = '') {	
@@ -84,13 +82,6 @@ class RouterOS
 		while($this->response() != '!done');
 	}
 
-	//! Create class instance and connect to device
-	//! @params host host name
-	//! @params login user name
-	//! @params password password
-	//! @params port port number
-	//! @params timeout connection timeout
-	//! @returns Class pointer when successfully connected or NULL
 	static function connect($host, $login, $password, $port = 8728, $timeout = 5) {
 		$self = new RouterOS();
 	
@@ -116,8 +107,6 @@ class RouterOS
 		return NULL;
 	}
 	
-  //! Set stream timeout
-  //! @params timeout stream timeout
 	public function setTimeout($timeout = 5) {
 		return stream_set_timeout($this->sock, $timeout);
 	}
@@ -171,12 +160,6 @@ class RouterOS
 		return $type;
 	}
 	
-	//! Get all values
-	//! @params cmd from where to get all data, ie. using string: "/ip/firewall" or using: array("ip", "firewall")
-	//! @params proplist list of values to get, ie. FALSE to get all or using comma delim string: "chain,action" or using: array("chain", "action")
-	//! @params args additional arguments to request
-	//! @params assoc name of assoc key which is used instead of next array indexes
-	//! @returns list of items or FALSE if failed
 	function getall($cmd, $proplist = FALSE, $args = array(), $assoc = FALSE) {
 		$this->send($cmd, 'getall', $proplist, $args);
 
@@ -220,10 +203,6 @@ class RouterOS
 		return $ids;
 	}
 	
-	//! Set value
-	//! @params cmd what to set, ie. using string: "/ip/firewall/filter" or using: array("ip", "firewall", "filter")
-	//! @params args array of values to set, ie. array(".id" => "*8", "action" => "drop")
-	//! @returns TRUE or FALSE
 	function set($cmd, $args = array()) {
 		if($this->readOnly)
 			return TRUE;
@@ -243,8 +222,6 @@ class RouterOS
 		}
 	}
 
-	//! Sends system reboot command
-	//! @returns TRUE or FALSE
 	function reboot() {
 		$this->send('/system', 'reboot', FALSE, FALSE);
 
@@ -264,9 +241,6 @@ class RouterOS
 		}
 	}
 	
-	//! Cancel command execution
-	//! @params tag tag of command to cancel or FALSE
-	//! @returns TRUE or FALSE
 	function cancel($tag = FALSE) {	
 		$this->send('', 'cancel', FALSE, FALSE, $tag);
 		
@@ -282,10 +256,7 @@ class RouterOS
 				die("set: undefined type\n");
 		}
 	}
-	
-	//! Download url on router
-	//! @params url url to fetch, ie. http://ftp.task.gda.pl/ls-lR
-	//! @returns TRUE or FALSE
+  
 	function fetchurl($url) {
 		$finished = FALSE;
 		
@@ -339,11 +310,6 @@ class RouterOS
 		return $finished;
 	}
 	
-	//! Move item before another item
-	//! @params cmd cmd where to move, ie. "/ip/firewall/filter" or array("ip", "firewall", "filter")
-	//! @params id what to move
-	//! @params before where to move
-	//! @returns TRUE or FALSE
 	function move($cmd, $id, $before) {
 		if($this->readOnly)
 			return TRUE;
@@ -362,11 +328,7 @@ class RouterOS
 				die("set: undefined type\n");
 		}
 	}
-	
-	//! Add a new item
-	//! @params cmd where to add, ie. "/ip/firewall/filter" or array("ip", "firewall", "filter")
-	//! @params args array of values to set, ie. array("action" => "drop")
-	//! @returns either new ".id" or TRUE or FALSE if failed
+  
 	function add($cmd, $args = array()) {
 		if($this->readOnly)
 			return TRUE;
@@ -388,10 +350,6 @@ class RouterOS
 		}
 	}
 	
-	//! Remove an list of items
-	//! @params cmd where to remove, ie. "/ip/firewall/filter" or array("ip", "firewall", "filter")
-	//! @params id array of .id to remove, ie. "*8" or "*8,*B" or array("*8", "*B")
-	//! @returns TRUE or FALSE
 	function remove($cmd, $id) {
 		if($this->readOnly)
 			return TRUE;
@@ -410,12 +368,7 @@ class RouterOS
 				die("remove: undefined type\n");
 		}
 	}
-	
-	//! Unset item value (for example time in /queue/simple)
-	//! @params cmd where to unset value, ie. "/queue/simple" or array("queue", "simple")
-	//! @params id for which item unset value, ie. "*8"
-	//! @params value value-name to unset, ie. "time"
-	//! @returns TRUE or FALSE
+  
 	function unsett($cmd, $id, $value) {
 		if($this->readOnly)
 			return TRUE;
@@ -434,11 +387,7 @@ class RouterOS
 				die("unset: undefined type\n");
 		}
 	}
-	
-  //! Perform wireless scan for specified interface with specified duration
-  //! @params id .id of interface to scan
-  //! @params duration time of scanning
-  //! @returns array of found wireless networks, where key is network BSSID
+  
 	function scan($id, $duration="00:02:00") {
 		$this->send('/interface/wireless', 'scan', FALSE, array('.id' => $id, 'duration' => $duration));
 

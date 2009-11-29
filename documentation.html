@@ -1,0 +1,241 @@
+<style>
+.name {
+  font-weight: bold;
+}
+pre.code {
+  font-weight: bold;
+}
+</style>
+
+<H1>RouterOS PHP API</H1>
+<pre>Version: 0.1 as of 2009-11-29
+Author: Kamil Trzcinski
+E-mail: ayufan(at)osk-net(dot)pl
+WWW: <a href="http://www.ayufan.eu">http://www.ayufan.eu</a>
+SVN: <a href="https://guest@svn.osk-net.pl:444/rosapi">https://svn.osk-net.pl:444/rosapi</a> (login: guest)</pre>
+<H2>Purpose</H2>
+<p>The main purpose of another RouterOS PHP API class it to simplify configuration update processes. Example: We have about 20 access points and for each of them we have connected about 20 wds links. Using automatic configuration process we can store information about all wds links in one place. It can be MySQL database.</p>
+<p>Using set of configuration files router's can be divided into function groups (ie. router, main-access-point, client-access-point, switch) and be configured from central server automatically. ONLY changed configuration will be updated, so in most cases no configuration will change.</p>
+
+<H2>Requirements</H2>
+<p>Requires a very good knowledge of RouterOS configuration tree.</p>
+
+<H2>RouterOS class</H2>
+<H3>General</H3>
+<p>Base class for handing RouterOS API interface. It implements methods of getting and setting values as well restarting router.</p>
+<H3>Remarks</H3>
+<p>All commands accepts two forms of arguments. Either using string or using array. Prefered way is to use <b>array</b>.</p>
+<b>To specify command (in RouterOS configuration tree) use:</b>
+<ul>
+  <li>slash delimeted string: <pre>/ip/firewall/string</pre></li>
+  <li>array of string: <pre>array("ip", "firewall", "string")</pre></li>
+</ul>
+<b>To specify configuration line (for command) use:</b>
+<ul>
+  <li>space delimeted string: <pre>chain=forward action=drop in-interface=ether1</pre></li>
+  <li>associative array of string: <pre>array("chain"=>"forward", "action"=>"drop", "in-interface"=>"ether1")</pre></li>
+</ul>
+<H3>Variables</H3>
+<ul>
+  <li>
+    <b>public $readOnly = FALSE;</b>
+    <p>Read-only flag. If set to TRUE: RouterOS class will not change nor remove any item.</p>
+  </li>
+</ul>
+<H3>Methods</H3>
+<ul>
+  <li>
+    <p class="name">static function connect($host, $login, $password, $port = 8728, $timeout = 5)</p>
+    <p class="desc">Connects to new RouterOS using specified "host" with specified "login" and "password" on "port".</p>
+    <pre class="code">$conn = RouterOS::connect("192.168.10.11", "admin", "adminpassword");</pre>
+  </li>
+  <li>
+    <p class="name">public function setTimeout($timeout = 5)</p>
+    <p class="desc">Set socket timeout in seconds.</p>
+    <pre class="code">$conn->setTimeout(10);</pre>
+  </li>
+  <li>
+    <p class="name">function getall($cmd, $proplist = FALSE, $args = array(), $assoc = FALSE)</p>
+    <p class="desc">Get all values for specified command. Returns array of results.</p>
+    <p><b>cmd</b> - name of command (string or array)</p>
+    <p><b>proplist</b> - list of values to get (string comma delimeted or array)</p>
+    <p><b>args</b> - additional arguments, ie. queries (string space delimeted or associative array)</p>
+    <p><b>assoc</b> - name of associative key</p>
+    <pre class="code">$conn->getall("/interface/wireless/registration-table");</pre>
+    <pre class="example">Array
+(
+    [0] => Array
+        (
+            [.id] => *2
+            [interface] => ap11
+            [mac-address] => 00:1F:1F:44:3F:18
+            [ap] => true
+            [wds] => true
+            [rx-rate] => 11Mbps
+            [tx-rate] => 11Mbps
+            [packets] => 237069,179718
+            [bytes] => 210614627,28263429
+            [frames] => 237069,179718
+            [frame-bytes] => 209210987,27185121
+            [hw-frames] => 289168,179718
+            [hw-frame-bytes] => 262600082,31498353
+            [tx-frames-timed-out] => 0
+            [uptime] => 1d11:00:24
+            [last-activity] => 00:00:04.950
+            [signal-strength] => -62dBm@1Mbps
+            [signal-to-noise] => 29
+            [strength-at-rates] => -62dBm@1Mbps 20ms,-61dBm@11Mbps 2m20s690ms
+            [tx-ccq] => 95
+            [p-throughput] => 5361
+            [ack-timeout] => 30
+            [last-ip] => 192.168.9.14
+            [802.1x-port-enabled] => true
+            [wmm-enabled] => false
+        )
+
+    [1] => Array
+        (
+            [.id] => *7
+            [interface] => backbone
+            [radio-name] => 000E8E228051
+            [mac-address] => 00:0C:42:3A:DB:17
+            [ap] => true
+            [wds] => true
+            [rx-rate] => 54Mbps*2
+            [tx-rate] => 54Mbps*2
+            [packets] => 22113864,21168612
+            [bytes] => 3001775892,3956497045
+            [frames] => 20116089,17752199
+            [frame-bytes] => 2899204750,3906321077
+            [hw-frames] => 34728036,595903321
+            [hw-frame-bytes] => 4191331598,1269068004
+            [tx-frames-timed-out] => 0
+            [uptime] => 1d11:00:22
+            [last-activity] => 00:00:00
+            [signal-strength] => -62dBm@6Mbps
+            [signal-to-noise] => 33
+            [strength-at-rates] => -62dBm@6Mbps 0s,-61dBm@9Mbps 6m37s360ms,-63dBm@12Mbps 6m37s360ms,-61dBm@18Mbps 6m37s330ms,-62dBm@24Mbps $
+            [tx-signal-strength] => -59
+            [tx-ccq] => 100
+            [rx-ccq] => 97
+            [p-throughput] => 55138
+            [nstreme] => true
+            [framing-mode] => best-fit
+            [framing-limit] => 3200
+            [routeros-version] => 4.2
+            [last-ip] => 192.168.254.2
+            [802.1x-port-enabled] => true
+            [compression] => false
+            [wmm-enabled] => true
+        )
+)
+</pre>
+    <pre class="code">$conn->getall("/interface/wireless/registration-table", ".id,interface,mac-address", FALSE, "mac-address");</pre>
+    <pre class="code">$conn->getall(array("interface", "wireless", "registration-table"), array(".id", "interface", "mac-address"), FALSE, "mac-address");</pre>
+    <pre>Array
+(
+    [00:1F:1F:44:3F:18] => Array
+        (
+            [.id] => *2
+            [interface] => ap11
+            [mac-address] => 00:1F:1F:44:3F:18
+        )
+
+    [00:0C:42:3A:DB:17] => Array
+        (
+            [.id] => *7
+            [interface] => backbone
+            [mac-address] => 00:0C:42:3A:DB:17
+        )
+)</pre>
+  </li>
+  <li>
+    <p class="name">function set($cmd, $args) </p>
+    <p class="desc">Set item or command value.</p>
+    <pre class="code">$conn->set("/ip/firewall/filter", ".id=*10 chain=forward action=reject");</pre>
+  </li>
+  <li>
+    <p class="name">function reboot()</p>
+    <p class="desc">Reboots RouterOS. Returns TRUE on success.</p>
+  </li>  
+  <li>
+    <p class="name">function cancel($tag = FALSE)</p>
+    <p class="desc">Cancel last or tagged command. Returns TRUE on success.</p>
+  </li>    
+  <li>
+    <p class="name">function fetchurl($url)</p>
+    <p class="desc">Uses /tool/fetch to download file from remote server. It can be used for example to fetch latest RouterOS releases. Returns TRUE on success.</p>
+    <pre class="code">$conn->fetchurl("http://66.228.113.58/routeros-mipsbe-4.3.npk");</pre>
+  </li>
+  <li>
+    <p class="name">function move($cmd, $id, $before)</p>
+    <p class="desc">Move specified item before another item. Returns TRUE on success.</p>
+    <pre class="code">$conn->move("/ip/firewall/filter", "*5", "*10");</pre>
+  </li>  
+  <li>
+    <p class="name">function add($cmd, $args)</p>
+    <p class="desc">Add new item for command. Returns new ID on success.</p>
+    <pre class="code">$conn->add("/ip/firewall/filter", "chain=forward action=drop");</pre>
+  </li>    
+  <li>
+    <p class="name">function remove($cmd, $id)</p>
+    <p class="desc">Remove specified item or array of items for command. Returns TRUE on success.</p>
+    <pre class="code">$conn->remove("/ip/firewall/filter", "*10");</pre>
+    <pre class="code">$conn->remove("/ip/firewall/filter", array("*10", "*20"));</pre>
+  </li>
+  <li>
+    <p class="name">function unsett($cmd, $id, $value)</p>
+    <p class="desc">Unset value for specified item. Returns TRUE on success.</p>
+    <pre class="code">$conn->unsett("/queue/simple", "*10", "time");</pre>
+  </li>    
+  <li>
+    <p class="name">function scan($id, $duration="00:02:00")</p>
+    <p class="desc">Perform a remote wireless scan. Before scanning set stream interval to larger value than duration. Returns array of results on success.</p>
+    <pre class="code">$interfaces = $conn->getall("/interface/wireless", ".id,name", FALSE, "name");</pre>
+    <pre class="example">Array
+(
+    [bridge06] => Array
+        (
+            [.id] => *9
+            [name] => bridge06
+        )
+
+    [backbone] => Array
+        (
+            [.id] => *A
+            [name] => backbone
+        )
+)
+</pre>
+    <pre class="code">$results = $conn->scan($interfaces["backbone"][".id"]);</pre>
+    <pre class="example">Array
+(
+    [00:02:6F:XX:XX:XX] => Array
+        (
+            [address] => 00:02:6F:XX:XX:XX
+            [ssid] => bridge02
+            [band] => 5ghz-t
+            [freq] => 5210
+            [sig] => -58
+            [nf] => -105
+            [snr] => 47
+            [radio-name] => 1402
+        )
+
+    [00:0C:42:XX:XX:XX] => Array
+        (
+            [address] => 00:0C:42:XX:XX:XX
+            [ssid] => bridge13
+            [band] => 5ghz-t
+            [freq] => 5210
+            [sig] => -60
+            [nf] => -105
+            [snr] => 45
+            [radio-name] => 3713
+        )
+)
+</pre>
+  </li>
+</ul>
+
+<H2>RouterOSParser class</H2>
