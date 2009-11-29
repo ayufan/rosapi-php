@@ -527,10 +527,10 @@ allow-interface ether2
 # check RouterOS version and configure differently
 if %version% ~= 3.*
         section ospf /routing/ospf value
-        set ospf router-id=192.168.10.%% distribute-default=never redistribute-connected=as-type-2 redistribute-static=as-type-2 redistribute-rip=no redistribute-bgp=no metric-default=2 metric-connected=2 metric-static=1 metric-rip=1 metric-bgp=1
+        set ospf distribute-default=never redistribute-connected=as-type-2 redistribute-static=as-type-2 redistribute-rip=no redistribute-bgp=no metric-default=2 metric-connected=2 metric-static=1 metric-rip=1 metric-bgp=1
 else
         section ospf-instance /routing/ospf/instance addset name
-        add ospf-instance name=default router-id=192.168.10.%% distribute-default=never redistribute-connected=as-type-2 redistribute-static=as-type-2 redistribute-rip=no redistribute-bgp=no metric-default=2 metric-connected=2 metric-static=1 metric-rip=1 metric-bgp=1
+        add ospf-instance name=default distribute-default=never redistribute-connected=as-type-2 redistribute-static=as-type-2 redistribute-rip=no redistribute-bgp=no metric-default=2 metric-connected=2 metric-static=1 metric-rip=1 metric-bgp=1
 endif
 
 # add sections for ospf configuration
