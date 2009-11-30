@@ -175,7 +175,7 @@ class RouterOS
       
       // read response parameters
       while($line = $this->readSock()) {
-        if($line[0] = '=') {
+        if($line[0] == '=') {
           $line = explode('=', $line, 3);
           $args[$line[1]] = count($line) == 3 ? $line[2] : TRUE;
           continue;
@@ -186,8 +186,6 @@ class RouterOS
         }
       }
       unset($args['debug-info']);
-      
-      print_r($args);
       
       if(isset($args[".tag"])) {
         if($dispatcher)
@@ -537,7 +535,6 @@ class RouterOS
     while($continue || count($this->tags)) {
       switch($type = $this->response(&$ret, TRUE)) {
         case '!re':
-          print_r($ret);
           if(isset($ret['.tag'])) {
             $callback = $this->tags[$ret['.tag']];
             if(is_callable($callback))
@@ -546,7 +543,6 @@ class RouterOS
           break;
           
         case '!done':
-        print_r($ret);
           if(isset($ret['.tag'])) {
             $callback = $this->tags[$ret['.tag']];
             if(is_callable($callback))
@@ -556,7 +552,6 @@ class RouterOS
           return TRUE;
           
         case '!trap':
-        print_r($ret);
           if(isset($ret['.tag'])) {
             $callback = $this->tags[$ret['.tag']];
             if(is_callable($callback))
