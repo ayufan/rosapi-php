@@ -155,7 +155,7 @@ class RouterOS
 	}
 	
 	private function response($args = FALSE, $dispatcher = FALSE) {
-    if($dispatcher && count($this->dispatcher) {
+    if($dispatcher && count($this->dispatcher)) {
       $res = array_shift($this->dispatcher);
       $args = $res["args"];
       return $res["type"];
@@ -538,7 +538,7 @@ class RouterOS
           if(isset($ret['.tag'])) {
             $callback = $this->tags[$ret['.tag']];
             if(is_callable($callback))
-              $callback(TRUE, $ret);
+              $callback($this, TRUE, $ret);
           }
           break;
           
@@ -546,7 +546,7 @@ class RouterOS
           if(isset($ret['.tag'])) {
             $callback = $this->tags[$ret['.tag']];
             if(is_callable($callback))
-              $callback(TRUE, NULL);
+              call_user_func($callback, $this, TRUE, NULL);
             unset($this->tags[$ret['.tag']]);
           }
           return TRUE;
@@ -555,7 +555,7 @@ class RouterOS
           if(isset($ret['.tag'])) {
             $callback = $this->tags[$ret['.tag']];
             if(is_callable($callback))
-              $callback(FALSE, $ret);
+              call_user_func($callback, $this, FALSE, $ret);
             unset($this->tags[$ret['.tag']]);
           }
           return FALSE;
