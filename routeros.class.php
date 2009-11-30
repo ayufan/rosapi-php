@@ -505,7 +505,7 @@ class RouterOS
         "protocol" => ($protocol == "tcp" ? "tcp" : "udp"),
         "local-udp-tx-size" => ($protocol == "tcp" ? 1500 : min(max(intval($protocol), 30), 1500))), $callback);
         
-    echo ".. running btest to $address ($speed/$protocol)... result:$res\n";
+    echo ".. running btest[$res] to $address ($speed/$protocol)...\n";
     
     if($callback) {
       return $res;
