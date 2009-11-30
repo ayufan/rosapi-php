@@ -27,7 +27,7 @@ for($i = 6; $i < $argc; ++$i) {
   $tag = $conn->btest($dest, $speed, $protocol, btestCallback);
   if($tag === FALSE)
     continue;
-  $dests[$dest] = $tag;
+  $dests[$tag] = $dest;
   $header[$dest] = str_pad($dest, MAX_LENGTH);
   $status[$dest] = str_pad($dest, MAX_LENGTH);
 }
@@ -50,7 +50,7 @@ function btestCallback($conn, $state, $results) {
     return;
   
   // find destination
-  $dest = array_search($results[".tag"], $dests);
+  $dest = $dests[$results[".tag"]];
   if($dest === FALSE)
     return;
   
@@ -78,7 +78,9 @@ function btestCallback($conn, $state, $results) {
     // restart btest (in error state)
     if($results["status"] != "connecting") {
       $conn->cancel($results[".tag"]);
-      $dests[$dest] = $conn->btest($dest, $speed, $protocol, btestCallback);
+      $tag = $conn->btest($dest, $speed, $protocol, btestCallback);
+      if($tag !== FALSE)
+        $dests[$tag] = $dest;
     }
     return;
   }
