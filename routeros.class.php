@@ -420,6 +420,34 @@ class RouterOS
 			}
 		}
 	}
+  
+  function btest($address, $speed = "1M", $protocol = "tcp") {
+    $this->send('/tool', 'bandwidth-test', FALSE, 
+      array(
+        "address" => $address, 
+        "local-tx-speed" => $speed, 
+        "protocol" => ($protocol == "tcp" ? "tcp" : "udp"),
+        "local-udp-tx-size" => ($protocol == "tcp" ? 1500 : min(max(intval($protocol), 30), 1500))));
+        
+    while(true) {
+      $ret = array();
+			switch($type = $this->response(&$ret)) {
+				case '!done':
+					return TRUE;
+					
+				case '!re':
+					print_r($ret);
+					break;
+					
+				case '!trap':
+					$this->trap($ret);
+					return FALSE;
+					
+				default:
+					die("btest: undefined type: $type\n");
+			}
+    }
+  }
 };
 
 ?>
