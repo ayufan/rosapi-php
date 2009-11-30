@@ -123,6 +123,8 @@ class RouterOS
 	}
 
 	private function send($cmd, $type, $proplist = FALSE, $args = FALSE, $tag = FALSE) {
+    $result = TRUE;
+    
 		if(is_array($cmd))
 			$cmd = '/' . join('/', $cmd);
 		$cmd .= '/' . $type;
@@ -139,13 +141,17 @@ class RouterOS
 			$this->writeSock(".proplist=" . (is_array($proplist) ? join(',', $proplist) : $proplist));
 		if($tag) {
       if(is_callable($tag)) {
-        $this->tags[$index = $this->tagIndex++] = $tag;
-        $this->writeSock(".tag=$index");
+        $result = $this->tagIndex++;
+        $this->tags[$result] = $tag;
       }
-      else
-        $this->writeSock(".tag=$tag");
+      else {
+        $result = $tag;
+      }
+      $this->writeSock(".tag=$result");
     }
 		$this->writeSock();
+    
+    return $result;
 	}
 	
 	private function response($args = FALSE, $dispatcher = FALSE) {
@@ -196,7 +202,7 @@ class RouterOS
 	}
 	
 	function getall($cmd, $proplist = FALSE, $args = array(), $assoc = FALSE, $callback = FALSE) {    
-		$this->send($cmd, 'getall', $proplist, $args, $callback);
+		$res = $this->send($cmd, 'getall', $proplist, $args, $callback);
 
 		if($proplist) {
 			if(!is_array($proplist))
@@ -205,7 +211,7 @@ class RouterOS
 		}
     
     if($callback) {
-      return TRUE;
+      return $res;
     }
 		
 		$ids = array();
@@ -246,7 +252,11 @@ class RouterOS
 		if($this->readOnly)
 			return TRUE;
 			
-		$this->send($cmd, 'set', FALSE, $args, $callback);
+		$res = $this->send($cmd, 'set', FALSE, $args, $callback);
+    
+    if($callback) {
+      return $res;
+    }
 		
 		switch($type = $this->response(&$ret)) {
 			case '!done':
@@ -289,10 +299,10 @@ class RouterOS
       }
     }
     
-		$this->send('', 'cancel', FALSE, array(".tag" => $tag), FALSE, $callback);
+		$res = $this->send('', 'cancel', FALSE, array(".tag" => $tag), FALSE, $callback);
     
     if($callback) {
-      return TRUE;
+      return $res;
     }
 		
 		switch($type = $this->response(&$ret)) {
@@ -313,10 +323,10 @@ class RouterOS
 		
 		echo ".. downloading $url\n";
 
-		$this->send('/tool', 'fetch', FALSE, array('url' => $url), $callback);
+		$res = $this->send('/tool', 'fetch', FALSE, array('url' => $url), $callback);
     
     if($callback) {
-      return TRUE;
+      return $res;
     }
 		
 		while(true) {
@@ -369,10 +379,10 @@ class RouterOS
 		if($this->readOnly)
 			return TRUE;
 			
-		$this->send($cmd, 'move', FALSE, array('numbers' => $id, 'destination' => $before), $callback);
+		$res = $this->send($cmd, 'move', FALSE, array('numbers' => $id, 'destination' => $before), $callback);
     
     if($callback) {
-      return TRUE;
+      return $res;
     }
 		
 		switch($type = $this->response(&$ret)) {
@@ -392,10 +402,10 @@ class RouterOS
 		if($this->readOnly)
 			return TRUE;
 			
-		$this->send($cmd, 'add', FALSE, $args, $callback);
+		$res = $this->send($cmd, 'add', FALSE, $args, $callback);
     
     if($callback) {
-      return TRUE;
+      return $res;
     }
 		
 		switch($type = $this->response(&$ret)) {
@@ -417,10 +427,10 @@ class RouterOS
 		if($this->readOnly)
 			return TRUE;
 			
-		$this->send($cmd, 'remove', FALSE, array('.id' => is_array($id) ? join(',', $id) : $id), $callback);
+		$res = $this->send($cmd, 'remove', FALSE, array('.id' => is_array($id) ? join(',', $id) : $id), $callback);
     
     if($callback) {
-      return TRUE;
+      return $res;
     }
 		
 		switch($type = $this->response(&$ret)) {
@@ -440,10 +450,10 @@ class RouterOS
 		if($this->readOnly)
 			return TRUE;
 				
-		$this->send($cmd, 'unset', FALSE, array('numbers' => $id, 'value-name' => $value), $callback);
+		$res = $this->send($cmd, 'unset', FALSE, array('numbers' => $id, 'value-name' => $value), $callback);
     
     if($callback) {
-      return TRUE;
+      return $res;
     }
 		
 		switch($type = $this->response(&$ret)) {
@@ -460,10 +470,10 @@ class RouterOS
 	}
   
 	function scan($id, $duration="00:02:00", $callback = FALSE) {
-		$this->send('/interface/wireless', 'scan', FALSE, array('.id' => $id, 'duration' => $duration), $callback);
+		$res = $this->send('/interface/wireless', 'scan', FALSE, array('.id' => $id, 'duration' => $duration), $callback);
     
     if($callback) {
-      return TRUE;
+      return $res;
     }
 
 		$results = array();
@@ -489,7 +499,7 @@ class RouterOS
 	}
   
   function btest($address, $speed = "1M", $protocol = "tcp", $callback = FALSE) {
-    $this->send('/tool', 'bandwidth-test', FALSE, 
+    $res = $this->send('/tool', 'bandwidth-test', FALSE, 
       array(
         "address" => $address, 
         "local-tx-speed" => $speed, 
@@ -497,7 +507,7 @@ class RouterOS
         "local-udp-tx-size" => ($protocol == "tcp" ? 1500 : min(max(intval($protocol), 30), 1500))), $callback);
         
     if($callback) {
-      return TRUE;
+      return $res;
     }
         
     while(true) {
