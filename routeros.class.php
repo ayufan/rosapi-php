@@ -497,14 +497,29 @@ class RouterOS
 	}
   
   function btest($address, $speed = "1M", $protocol = "tcp", $callback = FALSE) {   
-    $res = $this->send('/tool', 'bandwidth-test', FALSE, 
-      array(
+    list($proto, $count) = explode(":", $protocol, 2);
+    
+    $args = array(
         "address" => $address,
         "direction" => "transmit",
-        "local-tx-speed" => $speed, 
-        "protocol" => ($protocol == "tcp" ? "tcp" : "udp"),
-        "local-udp-tx-size" => ($protocol == "tcp" ? 1500 : min(max(intval($protocol), 30), 1500))), $callback);
+        "local-tx-speed" => $speed);
         
+    if($proto == "tcp") {
+      $count = min(max(intval($count), 1), 20);
+      $args["protocol"] = "tcp";
+      $args["tcp-connection-count"] = $count;
+    }
+    else if($proto == "udp") {
+      $count = min(max(intval($count), 30), 1500);
+      $args["protocol"] = "udp";
+      $args["local-udp-tx-size"] = $count;
+    }
+    else {
+      die("invalid protocol: $proto\n");
+    }
+    
+    $res = $this->send('/tool', 'bandwidth-test', FALSE, $args, $callback);
+    
     //echo ".. running btest[$res] to $address ($speed/$protocol)...\n";
     
     if($callback) {
