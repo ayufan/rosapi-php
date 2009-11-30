@@ -499,6 +499,8 @@ class RouterOS
 	}
   
   function btest($address, $speed = "1M", $protocol = "tcp", $callback = FALSE) {
+    echo ".. running btest to $address ($speed/$protocol)...\n";
+    
     $res = $this->send('/tool', 'bandwidth-test', FALSE, 
       array(
         "address" => $address, 
@@ -531,7 +533,7 @@ class RouterOS
   }
   
   function dispatch(&$continue) {
-    while($continue) {
+    while($continue || count($this->tags)) {
       switch($type = $this->response(&$ret, TRUE)) {
         case '!re':
           if(isset($ret['.tag'])) {
