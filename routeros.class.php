@@ -505,7 +505,7 @@ class RouterOS
         "protocol" => ($protocol == "tcp" ? "tcp" : "udp"),
         "local-udp-tx-size" => ($protocol == "tcp" ? 1500 : min(max(intval($protocol), 30), 1500))), $callback);
         
-    echo ".. running btest[$res] to $address ($speed/$protocol)...\n";
+    //echo ".. running btest[$res] to $address ($speed/$protocol)...\n";
     
     if($callback) {
       return $res;
@@ -549,7 +549,7 @@ class RouterOS
               call_user_func($callback, $this, TRUE, NULL);
             unset($this->tags[$ret['.tag']]);
           }
-          return TRUE;
+          break;
           
         case '!trap':
           if(isset($ret['.tag'])) {
@@ -558,12 +558,14 @@ class RouterOS
               call_user_func($callback, $this, FALSE, $ret);
             unset($this->tags[$ret['.tag']]);
           }
-          return FALSE;
+          break;
           
         default:
           die("dispatch: undefined type\n");
       }
     }
+    
+    return count($this->tags) != 0;
   }
 };
 
