@@ -503,7 +503,8 @@ class RouterOS
     
     $res = $this->send('/tool', 'bandwidth-test', FALSE, 
       array(
-        "address" => $address, 
+        "address" => $address,
+        "direction" => "transmit",
         "local-tx-speed" => $speed, 
         "protocol" => ($protocol == "tcp" ? "tcp" : "udp"),
         "local-udp-tx-size" => ($protocol == "tcp" ? 1500 : min(max(intval($protocol), 30), 1500))), $callback);
