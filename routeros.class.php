@@ -155,12 +155,10 @@ class RouterOS
 	}
 	
 	private function response($args = FALSE, $dispatcher = FALSE) {
-    if($dispatcher) {
+    if($dispatcher && count($this->dispatcher) {
       $res = array_shift($this->dispatcher);
-      if($res !== NULL) {
-        $args = $res["args"];
-        return $res["type"];
-      }
+      $args = $res["args"];
+      return $res["type"];
     }
     
     while(true) {
