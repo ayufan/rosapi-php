@@ -496,9 +496,7 @@ class RouterOS
 		}
 	}
   
-  function btest($address, $speed = "1M", $protocol = "tcp", $callback = FALSE) {
-    echo ".. running btest to $address ($speed/$protocol)...\n";
-    
+  function btest($address, $speed = "1M", $protocol = "tcp", $callback = FALSE) {   
     $res = $this->send('/tool', 'bandwidth-test', FALSE, 
       array(
         "address" => $address,
@@ -507,6 +505,8 @@ class RouterOS
         "protocol" => ($protocol == "tcp" ? "tcp" : "udp"),
         "local-udp-tx-size" => ($protocol == "tcp" ? 1500 : min(max(intval($protocol), 30), 1500))), $callback);
         
+    echo ".. running btest to $address ($speed/$protocol)... result:$res\n";
+    
     if($callback) {
       return $res;
     }
