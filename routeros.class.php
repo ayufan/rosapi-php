@@ -11,8 +11,11 @@
 class RouterOS
 {
 	private $sock;
-	private $tags;
 	private $where;
+  
+  private $tags = array();
+  private $tagIndex = 1;
+  private $dispatcher = array();
 	
 	public $readOnly = FALSE;
 	
@@ -134,48 +137,76 @@ class RouterOS
 		}
 		if($proplist)
 			$this->writeSock(".proplist=" . (is_array($proplist) ? join(',', $proplist) : $proplist));
-		if($tag)
-			$this->writeSock(".tag=$tag");
+		if($tag) {
+      if(is_callable($tag)) {
+        $this->tags[$index = $this->tagIndex++] = $tag;
+        $this->writeSock(".tag=$index");
+      }
+      else
+        $this->writeSock(".tag=$tag");
+    }
 		$this->writeSock();
 	}
 	
-	private function response($args = FALSE, $params = FALSE) {
-		$params = array();
-		$args = array();
-		$type = FALSE;
-		
-		// read response type
-		if($type = $this->readSock()) {
-			if($type[0] != '!') {
-				while($this->readSock());
-				return FALSE;
-			}
-		}
-		
-		// read response parameters
-		while($line = $this->readSock()) {
-			if($line[0] = '=') {
-				$line = explode('=', $line, 3);
-				$args[$line[1]] = count($line) == 3 ? $line[2] : TRUE;
-				continue;
-			}
-			else {
-				$line = explode('=', $line, 2);
-				$params[$line[0]] = isset($line[1]) ? $line[1] : '';
-			}
-		}
-		unset($args['debug-info']);
-		return $type;
+	private function response($args = FALSE, $dispatcher = FALSE) {
+    if($dispatcher) {
+      $res = array_shift($this->dispatcher);
+      if($res !== NULL) {
+        $args = $res["args"];
+        return $res["type"];
+      }
+    }
+    
+    while(true) {
+      $args = array();
+      $type = FALSE;
+      
+      // read response type
+      if($type = $this->readSock()) {
+        if($type[0] != '!') {
+          while($this->readSock());
+          return FALSE;
+        }
+      }
+      
+      // read response parameters
+      while($line = $this->readSock()) {
+        if($line[0] = '=') {
+          $line = explode('=', $line, 3);
+          $args[$line[1]] = count($line) == 3 ? $line[2] : TRUE;
+          continue;
+        }
+        else {
+          $line = explode('=', $line, 2);
+          $args[$line[0]] = isset($line[1]) ? $line[1] : '';
+        }
+      }
+      unset($args['debug-info']);
+      
+      if(isset($args[".tag"])) {
+        if($dispatcher)
+          return $type;
+        $this->dispatcher[] = array("tag" => $args[".tag"], "type" => $type, "args" => $args);
+      }
+      else {
+        return $type;
+      }
+    }
+    return FALSE;
 	}
 	
-	function getall($cmd, $proplist = FALSE, $args = array(), $assoc = FALSE) {
-		$this->send($cmd, 'getall', $proplist, $args);
+	function getall($cmd, $proplist = FALSE, $args = array(), $assoc = FALSE, $callback = FALSE) {    
+		$this->send($cmd, 'getall', $proplist, $args, $callback);
 
 		if($proplist) {
 			if(!is_array($proplist))
 				$proplist = explode(',', $proplist);
 			$proplist = array_fill_keys($proplist, TRUE);
 		}
+    
+    if($callback) {
+      return TRUE;
+    }
 		
 		$ids = array();
 		
@@ -211,11 +242,11 @@ class RouterOS
 		return $ids;
 	}
 	
-	function set($cmd, $args = array()) {
+	function set($cmd, $args = array(), $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
 			
-		$this->send($cmd, 'set', FALSE, $args);
+		$this->send($cmd, 'set', FALSE, $args, $callback);
 		
 		switch($type = $this->response(&$ret)) {
 			case '!done':
@@ -249,8 +280,20 @@ class RouterOS
 		}
 	}
 	
-	function cancel($tag = FALSE) {	
-		$this->send('', 'cancel', FALSE, FALSE, $tag);
+	function cancel($tag = FALSE, $callback = FALSE) {	
+    if(is_callable($tag)) {
+      $tag = array_search($tag, $this->tags);
+      if($tag === FALSE) {
+        echo "cancel: undefined tag\n";
+        return FALSE;
+      }
+    }
+    
+		$this->send('', 'cancel', FALSE, array(".tag" => $tag), FALSE, $callback);
+    
+    if($callback) {
+      return TRUE;
+    }
 		
 		switch($type = $this->response(&$ret)) {
 			case '!done':
@@ -265,12 +308,16 @@ class RouterOS
 		}
 	}
   
-	function fetchurl($url) {
+	function fetchurl($url, $callback = FALSE) {
 		$finished = FALSE;
 		
 		echo ".. downloading $url\n";
 
-		$this->send('/tool', 'fetch', FALSE, array('url' => $url));
+		$this->send('/tool', 'fetch', FALSE, array('url' => $url), $callback);
+    
+    if($callback) {
+      return TRUE;
+    }
 		
 		while(true) {
 			switch($type = $this->response(&$ret)) {
@@ -318,11 +365,15 @@ class RouterOS
 		return $finished;
 	}
 	
-	function move($cmd, $id, $before) {
+	function move($cmd, $id, $before, $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
 			
-		$this->send($cmd, 'move', FALSE, array('numbers' => $id, 'destination' => $before));
+		$this->send($cmd, 'move', FALSE, array('numbers' => $id, 'destination' => $before), $callback);
+    
+    if($callback) {
+      return TRUE;
+    }
 		
 		switch($type = $this->response(&$ret)) {
 			case '!done':
@@ -337,11 +388,15 @@ class RouterOS
 		}
 	}
   
-	function add($cmd, $args = array()) {
+	function add($cmd, $args = array(), $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
 			
-		$this->send($cmd, 'add', FALSE, $args);
+		$this->send($cmd, 'add', FALSE, $args, $callback);
+    
+    if($callback) {
+      return TRUE;
+    }
 		
 		switch($type = $this->response(&$ret)) {
 			case '!done':
@@ -358,11 +413,15 @@ class RouterOS
 		}
 	}
 	
-	function remove($cmd, $id) {
+	function remove($cmd, $id, $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
 			
-		$this->send($cmd, 'remove', FALSE, array('.id' => is_array($id) ? join(',', $id) : $id));
+		$this->send($cmd, 'remove', FALSE, array('.id' => is_array($id) ? join(',', $id) : $id), $callback);
+    
+    if($callback) {
+      return TRUE;
+    }
 		
 		switch($type = $this->response(&$ret)) {
 			case '!done':
@@ -377,11 +436,15 @@ class RouterOS
 		}
 	}
   
-	function unsett($cmd, $id, $value) {
+	function unsett($cmd, $id, $value, $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
 				
-		$this->send($cmd, 'unset', FALSE, array('numbers' => $id, 'value-name' => $value));
+		$this->send($cmd, 'unset', FALSE, array('numbers' => $id, 'value-name' => $value), $callback);
+    
+    if($callback) {
+      return TRUE;
+    }
 		
 		switch($type = $this->response(&$ret)) {
 			case '!done':
@@ -396,8 +459,12 @@ class RouterOS
 		}
 	}
   
-	function scan($id, $duration="00:02:00") {
-		$this->send('/interface/wireless', 'scan', FALSE, array('.id' => $id, 'duration' => $duration));
+	function scan($id, $duration="00:02:00", $callback = FALSE) {
+		$this->send('/interface/wireless', 'scan', FALSE, array('.id' => $id, 'duration' => $duration), $callback);
+    
+    if($callback) {
+      return TRUE;
+    }
 
 		$results = array();
 		
@@ -421,13 +488,17 @@ class RouterOS
 		}
 	}
   
-  function btest($address, $speed = "1M", $protocol = "tcp") {
+  function btest($address, $speed = "1M", $protocol = "tcp", $callback = FALSE) {
     $this->send('/tool', 'bandwidth-test', FALSE, 
       array(
         "address" => $address, 
         "local-tx-speed" => $speed, 
         "protocol" => ($protocol == "tcp" ? "tcp" : "udp"),
-        "local-udp-tx-size" => ($protocol == "tcp" ? 1500 : min(max(intval($protocol), 30), 1500))));
+        "local-udp-tx-size" => ($protocol == "tcp" ? 1500 : min(max(intval($protocol), 30), 1500))), $callback);
+        
+    if($callback) {
+      return TRUE;
+    }
         
     while(true) {
       $ret = array();
@@ -446,6 +517,41 @@ class RouterOS
 				default:
 					die("btest: undefined type: $type\n");
 			}
+    }
+  }
+  
+  function dispatch(&$continue) {
+    while($continue) {
+      switch($type = $this->response(&$ret, TRUE)) {
+        case '!re':
+          if(isset($ret['.tag'])) {
+            $callback = $this->tags[$ret['.tag']];
+            if(is_callable($callback))
+              $callback(TRUE, $ret);
+          }
+          break;
+          
+        case '!done':
+          if(isset($ret['.tag'])) {
+            $callback = $this->tags[$ret['.tag']];
+            if(is_callable($callback))
+              $callback(TRUE, NULL);
+            unset($this->tags[$ret['.tag']]);
+          }
+          return TRUE;
+          
+        case '!trap':
+          if(isset($ret['.tag'])) {
+            $callback = $this->tags[$ret['.tag']];
+            if(is_callable($callback))
+              $callback(FALSE, $ret);
+            unset($this->tags[$ret['.tag']]);
+          }
+          return FALSE;
+          
+        default:
+          die("set: undefined type\n");
+      }
     }
   }
 };
