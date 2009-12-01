@@ -1,7 +1,7 @@
 #!/usr/bin/php
 <?
 
-require_once("routeros.class.php");
+require_once(dirname(__FILE__)."/routeros.class.php");
 
 define(MAX_LENGTH, 10);
 define(MAX_TIME_LENGTH, 6);
@@ -33,12 +33,19 @@ $tags = array();
 // start btest
 for($i = 2; $i < $argc; ++$i) {
   list($dest, $speed, $protocol) = explode("@", $argv[$i]);
-  if($dests[$dest])
-    die("destination $dest already defined!\n");
+
   if(!$speed)
     $speed = 0;
   if(!$protocol)
     $protocol = "tcp";
+    
+  $names = gethostbynamel($dest);
+  if($names === FALSE) 
+      die("couldn't resolve $dest!\n");
+  $dest = $names[0];
+      
+  if($dests[$dest])
+    die("destination $dest already defined!\n");  
  
   $tag = $conn->btest($dest, $speed, $protocol, btestCallback);
   if($tag === FALSE)
