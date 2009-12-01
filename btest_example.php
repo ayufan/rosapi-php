@@ -1,3 +1,4 @@
+#!/usr/bin/php
 <?
 
 require_once("routeros.class.php");
