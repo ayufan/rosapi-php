@@ -3,9 +3,6 @@
 
 require_once(dirname(__FILE__)."/routeros.class.php");
 
-define(MAX_LENGTH, 10);
-define(MAX_TIME_LENGTH, 6);
-
 if($argc < 3) {
   die("usage: ${argv[0]} <login>:<password>@<host> <destination1>@<speed>@<protocol>...\n");
 }
@@ -28,6 +25,8 @@ $conn->setTimeout(60);
 // structures
 $dests = array();
 $status = array();
+$current = array();
+$average = array();
 $tags = array();
 
 // start btest
@@ -39,24 +38,25 @@ for($i = 2; $i < $argc; ++$i) {
   if(!$protocol)
     $protocol = "tcp";
     
-  $names = gethostbynamel($dest);
-  if($names === FALSE) 
+  $name = gethostbynamel($dest);
+  if($name === FALSE) 
       die("couldn't resolve $dest!\n");
-  $dest = $names[0];
+  $name = $name[0];
       
-  if($dests[$dest])
+  if($dests[$name])
     die("destination $dest already defined!\n");  
  
-  $tag = $conn->btest($dest, $speed, $protocol, btestCallback);
+  $tag = $conn->btest($name, $speed, $protocol, btestCallback);
   if($tag === FALSE)
     continue;
   
   $tags[$tag] = $dest;
-  $dests[$dest] = array("dest" => $dest, "speed" => $speed, "protocol" => $protocol);
+  $dests[$name] = array("dest" => $dest, "speed" => $speed, "protocol" => $protocol);
 }
 
 // print header
-printHeader();
+ncurses_init();
+ncurses_nl();
 printStatus();
 
 // dispatch messages
@@ -66,7 +66,7 @@ $conn->dispatch($continue);
 exit;
 
 function btestCallback($conn, $state, $results) {
-  global $dests, $tags, $status;
+  global $dests, $tags, $status, $current, $average;
 
   // done message
   if($state == TRUE && !$results)
@@ -109,7 +109,9 @@ function btestCallback($conn, $state, $results) {
   }
  
   // running get results
-  $status[$dest] = bytesToString($results["tx-10-second-average"], 1000, "bps");
+  $status[$dest] = $results["status"];
+  $current[$dest] = bytesToString($results["tx-current"], 1000, "b");
+  $average[$dest] = bytesToString($results["tx-10-second-average"], 1000, "b");
   printStatus();
 }
 
@@ -128,32 +130,52 @@ function bytesToString($data, $multi = 1024, $postfix = "B") {
   return round($dat /$multi/$multi/$multi, 1) . "G$postfix";
 }
 
-function printHeader() {
-  global $dests;
-  
-  $out = "-- ". str_pad("time", MAX_TIME_LENGTH)." -- ";
-  foreach($dests as $dest=>$desc) {
-    $out .= str_pad($dest, MAX_LENGTH)." -- ";
-  }
-  echo "$out\n";
-  flush();
-}
-
-function printStatus() {
-  global $dests, $header, $status;
-  
-  // update time
+function getTime() {
   static $startTime;
   if(!$startTime)
     $startTime = microtime(TRUE);
-  $time = round(microtime(TRUE) - $startTime, 1);
-  
-  // print status line
-  $out = "-- ".str_pad($time, MAX_TIME_LENGTH)." -- ";
-  foreach($status as $dest=>$stat)
-    $out .= str_pad($stat, max(strlen($dest), MAX_LENGTH)) . " -- ";
-  echo "$out\r";
-  flush();
+  return round(microtime(TRUE) - $startTime, 1);
+}
+
+function printTable($header, $line) {
+  $sizes = array();
+  foreach($header as $h)
+    $sizes[$h] = strlen($h);
+
+  foreach($line as $v)
+    foreach($header as $h)
+      $sizes[$h] = max($sizes[$h], strlen($v[$h]));
+
+  $out = "== ";
+  foreach($header as $h)
+    $out .= str_pad($h, $sizes[$h])." == ";
+  $out .= "\n";  
+
+  foreach($line as $v) {
+    $out .= "-- ";
+    foreach($header as $h)
+      $out .= str_pad($v[$h], $sizes[$h])." -- ";
+    $out .= "\n";
+  }
+  return $out;
+}
+
+function printStatus() {
+  global $dests, $status, $current, $average;
+
+  ncurses_clear();
+  ncurses_move(0, 0);
+  ncurses_addstr("time: ".getTime()."\n\n");
+
+  $header = array("host", "speed", "proto", "status", "current", "average");
+  $lines = array();
+
+  foreach($dests as $dest) {
+    $lines[] = array("host"=>$dest["dest"], "speed"=>$dest["speed"], "proto"=>$dest["protocol"], 
+"status"=>$status[$dest["dest"]], "current"=>$current[$dest["dest"]], "average"=>$average[$dest["dest"]]);
+  }
+  ncurses_addstr(printTable($header, $lines));
+  ncurses_refresh();
 }
 
 ?>
