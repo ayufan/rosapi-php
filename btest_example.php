@@ -3,37 +3,52 @@
 require_once("routeros.class.php");
 
 define(MAX_LENGTH, 10);
+define(MAX_TIME_LENGTH, 6);
 
-if($argc < 6) {
-  die("usage: ${argv[0]} <host> <login> <password> <speed> <protocol> <destination1>...\n");
+if($argc < 3) {
+  die("usage: ${argv[0]} <login>:<password>@<host> <destination1>@<speed>@<protocol>...\n");
 }
 
-list($cmd, $host, $login, $password, $speed, $protocol) = $argv;
+// get args
+list($login, $host) = explode('@', $argv[1], 2);
+if($host) {
+  list($login, $password) = explode(':', $login, 2);
+}
+else {
+  $host = $login;
+  $login = "admin";
+  $password = "";
+}
 
+// connect to server
 $conn = RouterOS::connect($host, $login, $password) or die("couldn't connect to $login@$host\n");
 $conn->setTimeout(60);
 
+// structures
 $dests = array();
-$header = array();
 $status = array();
-
-// add time
-$header["time"] = str_pad("time", MAX_LENGTH);
-$status["time"] = 0;
+$tags = array();
 
 // start btest
-for($i = 6; $i < $argc; ++$i) {
-  $dest = $argv[$i];
+for($i = 2; $i < $argc; ++$i) {
+  list($dest, $speed, $protocol) = explode("@", $argv[$i]);
+  if($dests[$dest])
+    die("destination $dest already defined!\n");
+  if(!$speed)
+    $speed = 0;
+  if(!$protocol)
+    $protocol = "tcp";
+ 
   $tag = $conn->btest($dest, $speed, $protocol, btestCallback);
   if($tag === FALSE)
     continue;
-  $dests[$tag] = $dest;
-  $header[$dest] = str_pad($dest, MAX_LENGTH);
-  $status[$dest] = str_pad($dest, MAX_LENGTH);
+  
+  $tags[$tag] = $dest;
+  $dests[$dest] = array("dest" => $dest, "speed" => $speed, "protocol" => $protocol);
 }
 
 // print header
-echo "-- ".join(" -- ", $header)." --\n";
+printHeader();
 printStatus();
 
 // dispatch messages
@@ -43,14 +58,14 @@ $conn->dispatch($continue);
 exit;
 
 function btestCallback($conn, $state, $results) {
-  global $dests, $header, $status, $speed, $protocol;
+  global $dests, $tags, $status;
 
   // done message
   if($state == TRUE && !$results)
     return;
   
   // find destination
-  $dest = $dests[$results[".tag"]];
+  $dest = $tags[$results[".tag"]];
   if($dest === FALSE)
     return;
   
@@ -78,31 +93,42 @@ function btestCallback($conn, $state, $results) {
     // restart btest (in error state)
     if($results["status"] != "connecting") {
       $conn->cancel($results[".tag"]);
-      $tag = $conn->btest($dest, $speed, $protocol, btestCallback);
+      $tag = $conn->btest($dest, $dests[$dest]["speed"], $dests[$dest]["protocol"], btestCallback);
       if($tag !== FALSE)
-        $dests[$tag] = $dest;
+        $tags[$tag] = $dest;
     }
     return;
   }
  
   // running get results
-  $status[$dest] = bytesToString($results["tx-10-second-average"], 1000)."bit/s";
+  $status[$dest] = bytesToString($results["tx-10-second-average"], 1000, "bps");
   printStatus();
 }
 
-function bytesToString($data, $multi = 1024) {
+function bytesToString($data, $multi = 1024, $postfix = "B") {
   $data = intval($data);
 
   if($data < $multi) {
-          return round($data, 0) . "B";
+    return round($data, 0) . $postfix;
   }
   if($data < $multi*$multi) {
-          return round($data/$multi, 1) . "kB";
+    return round($data/$multi, 1) . "k$postfix";
   }
   if($data < $multi*$multi*$multi) {
-          return round($data/$multi/$multi, 1) . "MB";
+    return round($data/$multi/$multi, 1) . "M$postfix";
   }
-  return round($dat /$multi/$multi/$multi, 1) . "GB";
+  return round($dat /$multi/$multi/$multi, 1) . "G$postfix";
+}
+
+function printHeader() {
+  global $dests;
+  
+  $out = "-- ". str_pad("time", MAX_TIME_LENGTH)." -- ";
+  foreach($dests as $dest=>$desc) {
+    $out .= str_pad($dest, MAX_LENGTH)." -- ";
+  }
+  echo "$out\n";
+  flush();
 }
 
 function printStatus() {
@@ -112,12 +138,12 @@ function printStatus() {
   static $startTime;
   if(!$startTime)
     $startTime = microtime(TRUE);
-  $status["time"] = round(microtime(TRUE) - $startTime, 1);
+  $time = round(microtime(TRUE) - $startTime, 1);
   
   // print status line
-  $out = "-- ";
+  $out = "-- ".str_pad($time, MAX_TIME_LENGTH)." -- ";
   foreach($status as $dest=>$stat)
-    $out .= str_pad($stat, max(strlen($header[$dest]), MAX_LENGTH)) . " -- ";
+    $out .= str_pad($stat, max(strlen($dest), MAX_LENGTH)) . " -- ";
   echo "$out\r";
   flush();
 }
