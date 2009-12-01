@@ -27,6 +27,7 @@ $dests = array();
 $status = array();
 $current = array();
 $average = array();
+$percent = array();
 $tags = array();
 
 // start btest
@@ -50,7 +51,7 @@ for($i = 2; $i < $argc; ++$i) {
   if($tag === FALSE)
     continue;
   
-  $tags[$tag] = $dest;
+  $tags[$tag] = $name;
   $dests[$name] = array("dest" => $dest, "speed" => $speed, "protocol" => $protocol);
 }
 
@@ -66,7 +67,7 @@ $conn->dispatch($continue);
 exit;
 
 function btestCallback($conn, $state, $results) {
-  global $dests, $tags, $status, $current, $average;
+  global $dests, $tags, $status, $current, $average, $percent;
 
   // done message
   if($state == TRUE && !$results)
@@ -112,7 +113,21 @@ function btestCallback($conn, $state, $results) {
   $status[$dest] = $results["status"];
   $current[$dest] = bytesToString($results["tx-current"], 1000, "b");
   $average[$dest] = bytesToString($results["tx-10-second-average"], 1000, "b");
+  $percent[$dest] = round(100 * $results["tx-10-second-average"] / stringToBytes($dests[$dest]["speed"], 1000), 1);
   printStatus();
+}
+
+function stringToBytes($data, $multi = 1024) {
+  $value = floatval($data);
+  switch(substr(strtolower($data), -1)) {
+    case 'g':
+      $value *= $multi;
+    case 'm':
+      $value *= $multi;
+    case 'k':
+      $value *= $multi;
+  }
+  return $value;
 }
 
 function bytesToString($data, $multi = 1024, $postfix = "B") {
@@ -161,18 +176,18 @@ function printTable($header, $line) {
 }
 
 function printStatus() {
-  global $dests, $status, $current, $average;
+  global $dests, $status, $current, $average, $percent;
 
   ncurses_clear();
   ncurses_move(0, 0);
   ncurses_addstr("time: ".getTime()."\n\n");
 
-  $header = array("host", "speed", "proto", "status", "current", "average");
+  $header = array("host", "speed", "proto", "status", "current", "average", "%");
   $lines = array();
 
-  foreach($dests as $dest) {
-    $lines[] = array("host"=>$dest["dest"], "speed"=>$dest["speed"], "proto"=>$dest["protocol"], 
-"status"=>$status[$dest["dest"]], "current"=>$current[$dest["dest"]], "average"=>$average[$dest["dest"]]);
+  foreach($dests as $dest=>$desc) {
+    $lines[] = array("host"=>$desc["dest"], "speed"=>$desc["speed"], "proto"=>$desc["protocol"], 
+"status"=>$status[$dest], "current"=>$current[$dest], "average"=>$average[$dest], "%"=>$percent[$dest]);
   }
   ncurses_addstr(printTable($header, $lines));
   ncurses_refresh();
