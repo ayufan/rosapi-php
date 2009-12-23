@@ -15,8 +15,7 @@ class RouterOSParser
 	private $configList = array();
 	private $ignoreList = array(); // takes precedence before passList
 	private $passList = array();
-	private $vars = array();
-	private $vars_keys = array(), $vars_values = array();
+	public $vars = array();
   
 	public $logs = array();
   
@@ -24,29 +23,45 @@ class RouterOSParser
 	
 	public $currentContext = "--internal--";
 	
+	public function __get($name) {
+		return $this->vars[$name];
+	}
+	public function __set($name, $value) {
+		if($value === NULL)
+			unset($this->vars[$name]);
+		else
+			$this->vars[$name] = $value;
+	}
+	public function __isset($name) {
+		return isset($this->vars[$name]);
+	}
+	public function __unset($name) {
+		unset($this->vars[$name]);
+	}
+	
 	function error($message) {
 		die($this->currentContext." : $message\n");
 	}
 
-	function define($key, $value = FALSE) {
-		if($value)
-			$this->vars["%$key%"] = $value;
+	function define($key, $value = NULL) {
+		if($value !== NULL)
+			$this->vars[$key] = $value;
 		else
-			unset($this->vars["%$key%"]);
-		$this->vars_keys = array_keys($this->vars);
-		$this->vars_values = array_values($this->vars);
+			unset($this->vars[$key]);
 	}
 
 	function variable($key) {
-		return $this->vars["%$key%"];
+		return $this->vars[$key];
 	}
 	
 	private static function splitLine($line, $count = FALSE) {
 		return $count ? split("[ \t]+", $line, $count) : split("[ \t]+", $line);
 	}
 	
-	function replace($value) {
-		return stripcslashes(str_replace($this->vars_keys, $this->vars_values, $value));
+	function replace($string) {
+		foreach($this->vars as $key=>$value)
+			$string = str_replace("%$key%", $value, $string);
+		return stripcslashes($string);
 	}
 	
 	private function explodeString($line, $explode = FALSE, $defaults = FALSE) {
@@ -144,6 +159,8 @@ class RouterOSParser
 	}
 	
 	private function compareValues($v, $op, $b) {
+		($v[0] != '%' || $v[-1] != '%') or $this->error("compare : invalid variable : $v");
+		$v = substr($v, 1, -1);
 		isset($this->vars[$v]) or $this->error("compare : invalid variable : $v");
 		switch($op) {
 		case '=':			return $this->vars[$v] == $b;

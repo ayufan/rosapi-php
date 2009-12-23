@@ -93,7 +93,7 @@ class RouterOS
 		while($this->response() != '!done');
 	}
 
-	static function connect($host, $login, $password, $port = 8728, $timeout = 5) {
+	static function connect($host, $login, $password, $port = 8728, $timeout = 10) {
 		$self = new RouterOS();
 	
 		// open socket
