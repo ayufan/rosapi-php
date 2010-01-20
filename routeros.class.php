@@ -99,8 +99,7 @@ class RouterOS
   //! @param login user login
   //! @param password user password
   //! @param port api service port
- 
-  //! @returns RouterOS class object
+  //! @return RouterOS class object
 	static function connect($host, $login, $password, $port = 8728, $timeout = 10) {
 		$self = new RouterOS();
 	
@@ -126,6 +125,7 @@ class RouterOS
 		return NULL;
 	}
 	
+  //! Set socket timeout in seconds. Defines how long socket waits for data read/write.
 	public function setTimeout($timeout = 5) {
 		return stream_set_timeout($this->sock, $timeout);
 	}
@@ -212,7 +212,8 @@ class RouterOS
   //! @param proplist list of values to get (string comma delimeted or array)
   //! @param args additional argument, ie. queries (string space delimeted or associative array)
   //! @param assoc name of associative key
-  //! @returns array of results
+  //! @retval integer callback index
+  //! @retval array results
 	function getall($cmd, $proplist = FALSE, $args = array(), $assoc = FALSE, $callback = FALSE) {    
 		$res = $this->send($cmd, 'getall', $proplist, $args, $callback);
 
@@ -260,6 +261,10 @@ class RouterOS
 		return $ids;
 	}
 	
+  //! Set item or command value
+  //! @see getall
+  //! @retval integer calback index 
+  //! @retval boolean command execution status
 	function set($cmd, $args = array(), $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
@@ -282,7 +287,9 @@ class RouterOS
 				die("set: undefined type\n");
 		}
 	}
-
+  
+  //! Reboots RouterOS
+  //! @retval boolean
 	function reboot() {
 		$this->send('/system', 'reboot', FALSE, FALSE);
 
@@ -302,6 +309,10 @@ class RouterOS
 		}
 	}
 	
+  //! Cancel last or tagged command
+  //! @param tag callback index for cancel
+  //! @retval integer callback index
+  //! @retval boolean cancel status
 	function cancel($tag = FALSE, $callback = FALSE) {	
     if(is_callable($tag)) {
       $tag = array_search($tag, $this->tags);
@@ -330,6 +341,10 @@ class RouterOS
 		}
 	}
   
+  //! Uses /tool/fetch to download file from remote server. It can be used for example to fetch latest RouterOS releases.
+  //! @param url http://66.228.113.58/routeros-mipsbe-4.3.npk
+  //! @retval integer callback index
+  //! @retval boolean fetch status
 	function fetchurl($url, $callback = FALSE) {
 		$finished = FALSE;
 		
@@ -387,6 +402,10 @@ class RouterOS
 		return $finished;
 	}
 	
+  //! Move specified item before another item.
+  //! @param id item index to move
+  //! @retval integer callback index
+  //! @retval boolean move status  
 	function move($cmd, $id, $before, $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
@@ -410,6 +429,12 @@ class RouterOS
 		}
 	}
   
+  //! Add an new item for command.
+  //! @see getall
+  //! @param id item index to move
+  //! @retval integer callback index
+  //! @retval string new item index
+  //! @retval boolean add status
 	function add($cmd, $args = array(), $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
@@ -435,6 +460,11 @@ class RouterOS
 		}
 	}
 	
+  //! Remove specified item or array of items for command
+  //! @see getall
+  //! @param id item or array of items to remove
+  //! @retval integer callback index
+  //! @retval boolean remove status
 	function remove($cmd, $id, $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
@@ -458,6 +488,12 @@ class RouterOS
 		}
 	}
   
+  //! Unset value for specified item
+  //! @see getall
+  //! @param id item index
+  //! @param value what to unset
+  //! @retval integer callback index
+  //! @retval boolean remove status
 	function unsett($cmd, $id, $value, $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
@@ -481,6 +517,12 @@ class RouterOS
 		}
 	}
   
+  //! Perform a remote wireless scan. Before scanning set stream interval to larger value than duration. 
+  //! @param id index of wireless interface
+  //! @param duration how long to scan
+  //! @retval integer callback index
+  //! @retval array results where key is bssid
+  //! @retval boolean FALSE on error  
 	function scan($id, $duration="00:10:00", $callback = FALSE) {
 		$res = $this->send('/interface/wireless', 'scan', FALSE, array('.id' => $id, 'duration' => $duration), $callback);
     
@@ -510,6 +552,12 @@ class RouterOS
 		}
 	}
   
+  //! Perform a wireless frequency scanner. Before scanning set stream interval to larger value than duration. 
+  //! @see scan
+  //! @param id index of wireless interface
+  //! @retval integer callback index
+  //! @retval array results where key is frequency
+  //! @retval boolean FALSE on error    
 	function freqmon($id, $duration="00:02:00", $callback = FALSE) {
 		$res = $this->send('/interface/wireless', 'frequency-monitor', FALSE, array('.id' => $id, 'duration' => $duration), $callback);
     
@@ -539,6 +587,12 @@ class RouterOS
 		}
 	}  
   
+  //! Perform a bandwidth-test. Supports only transmit and it should be used as asynchronous command, ie. callback. 
+  //! @see getall
+  //! @param address ip address or dns name
+  //! @param protocol udp[:packet_size] or tcp
+  //! @retval integer callback index
+  //! @retval boolean test result    
   function btest($address, $speed = "1M", $protocol = "tcp", $callback = FALSE) {   
     list($proto, $count) = explode(":", $protocol, 2);
     
@@ -589,6 +643,9 @@ class RouterOS
     }
   }
   
+  //! Dispatches comming messages from server to functions executed as callbacks.
+  //! @param continue flag to manually break listener loop (it can be done from callback). Initial value should be set to TRUE.
+  //! @retval boolean TRUE if there is one or more pending functions
   function dispatch(&$continue) {
     while($continue || count($this->tags)) {
       switch($type = $this->response(&$ret, TRUE)) {
