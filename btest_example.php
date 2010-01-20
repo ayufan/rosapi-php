@@ -111,8 +111,8 @@ function btestCallback($conn, $state, $results) {
  
   // running get results
   $status[$dest] = $results["status"];
-  $current[$dest] = bytesToString($results["tx-current"], 1000, "b");
-  $average[$dest] = bytesToString($results["tx-10-second-average"], 1000, "b");
+  $current[$dest] = $results["tx-current"];
+  $average[$dest] = $results["tx-10-second-average"];
   $percent[$dest] = round(100 * $results["tx-10-second-average"] / stringToBytes($dests[$dest]["speed"], 1000), 1);
   printStatus();
 }
@@ -130,7 +130,7 @@ function stringToBytes($data, $multi = 1024) {
   return $value;
 }
 
-function bytesToString($data, $multi = 1024, $postfix = "B") {
+function bytesToString($data, $multi = 1024, $postfix = "") {
   $data = intval($data);
 
   if($data < $multi) {
@@ -169,7 +169,7 @@ function printTable($header, $line) {
   foreach($line as $v) {
     $out .= "-- ";
     foreach($header as $h)
-      $out .= str_pad($v[$h], $sizes[$h])." -- ";
+      $out .= @str_pad($v[$h], $sizes[$h])." -- ";
     $out .= "\n";
   }
   return $out;
@@ -178,17 +178,22 @@ function printTable($header, $line) {
 function printStatus() {
   global $dests, $status, $current, $average, $percent;
 
-  ncurses_clear();
-  ncurses_move(0, 0);
-  ncurses_addstr("time: ".getTime()."\n\n");
-
+  // calculate
   $header = array("host", "speed", "proto", "status", "current", "average", "%");
   $lines = array();
+  
+  $averageSum = 0;
 
   foreach($dests as $dest=>$desc) {
     $lines[] = array("host"=>$desc["dest"], "speed"=>$desc["speed"], "proto"=>$desc["protocol"], 
-"status"=>$status[$dest], "current"=>$current[$dest], "average"=>$average[$dest], "%"=>$percent[$dest]);
+"status"=>$status[$dest], "current"=>bytesToString($current[$dest], 1000), "average"=>bytesToString($average[$dest], 1000), "%"=>$percent[$dest]);
+    $averageSum += $average[$dest];
   }
+ 
+  // draw on screen
+  ncurses_clear();
+  ncurses_move(0, 0);
+  ncurses_addstr("btester\ntime: ".getTime()."\naverage: ".bytesToString($averageSum, 1000)."\n\n");
   ncurses_addstr(printTable($header, $lines));
   ncurses_refresh();
 }
