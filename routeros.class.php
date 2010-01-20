@@ -481,7 +481,7 @@ class RouterOS
 		}
 	}
   
-	function scan($id, $duration="00:02:00", $callback = FALSE) {
+	function scan($id, $duration="00:10:00", $callback = FALSE) {
 		$res = $this->send('/interface/wireless', 'scan', FALSE, array('.id' => $id, 'duration' => $duration), $callback);
     
     if($callback) {
@@ -509,6 +509,35 @@ class RouterOS
 			}
 		}
 	}
+  
+	function freqmon($id, $duration="00:02:00", $callback = FALSE) {
+		$res = $this->send('/interface/wireless', 'frequency-monitor', FALSE, array('.id' => $id, 'duration' => $duration), $callback);
+    
+    if($callback) {
+      return $res;
+    }
+
+		$results = array();
+		
+		while(true) {
+			$ret = array();
+			switch($type = $this->response(&$ret)) {
+				case '!done':
+					return $results;
+					
+				case '!re':
+					$results[$ret['freq']][] = $ret;
+					break;
+					
+				case '!trap':
+					$this->trap($ret);
+					return FALSE;
+					
+				default:
+					die("scan: undefined type: $type\n");
+			}
+		}
+	}  
   
   function btest($address, $speed = "1M", $protocol = "tcp", $callback = FALSE) {   
     list($proto, $count) = explode(":", $protocol, 2);
