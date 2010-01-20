@@ -17,6 +17,7 @@ class RouterOS
   private $tagIndex = 1;
   private $dispatcher = array();
 	
+  //! Read-only flag. If set to TRUE: RouterOS class will not change nor remove any item.
 	public $readOnly = FALSE;
 	
 	private function writeSock($cmd = '') {	
@@ -93,6 +94,13 @@ class RouterOS
 		while($this->response() != '!done');
 	}
 
+  //! Connects to new MikroTik RouterOS 
+  //! @param host ip address or dns name
+  //! @param login user login
+  //! @param password user password
+  //! @param port api service port
+ 
+  //! @returns RouterOS class object
 	static function connect($host, $login, $password, $port = 8728, $timeout = 10) {
 		$self = new RouterOS();
 	
@@ -199,6 +207,12 @@ class RouterOS
     return FALSE;
 	}
 	
+  //! Get all values for specified command
+  //! @param cmd name of command (string or array)
+  //! @param proplist list of values to get (string comma delimeted or array)
+  //! @param args additional argument, ie. queries (string space delimeted or associative array)
+  //! @param assoc name of associative key
+  //! @returns array of results
 	function getall($cmd, $proplist = FALSE, $args = array(), $assoc = FALSE, $callback = FALSE) {    
 		$res = $this->send($cmd, 'getall', $proplist, $args, $callback);
 
