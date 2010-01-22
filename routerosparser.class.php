@@ -1,13 +1,18 @@
 <?
 
-/*
-  Author: Kamil Trzcinski
-  E-mail: ayufan(at)osk-net(dot)pl
-  WWW: http://www.ayufan.eu
-  SVN: https://svn.osk-net.pl:444/rosapi (login: guest)
-  License: http://www.gnu.org/licenses/gpl.html
+/**
+/section How it works
+# For each section: RouterOS::getall items from RouterOS
+# ignore all dynamic entries, remove all invalid entries
+# try to classify RouterOS item to either ignore or to pass list
+# try to match RouterOS item with local item using defined \a keys, if no match found remove, if match found update only what changed
+# reorder RouterOS item list
+# add not found items to RouterOS
 */
 
+//! @brief Parser class to load configuration from file and perform differencing configuration update.
+//! @author ayufan
+//! @remarks GPL: http://www.gnu.org/licenses/gpl.html
 class RouterOSParser
 {
 	private $cmdList = array();
@@ -16,9 +21,9 @@ class RouterOSParser
 	private $ignoreList = array(); // takes precedence before passList
 	private $passList = array();
 	public $vars = array();
-  
+	
 	public $logs = array();
-  
+	
 	public $showIgnored = FALSE;
 	
 	public $currentContext = "--internal--";

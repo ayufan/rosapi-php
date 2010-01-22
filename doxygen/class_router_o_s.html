@@ -50,11 +50,12 @@ window.onload = initDynSections;
 -->
 </script>
 <div class="contents">
-<h1>RouterOS Class Reference</h1><!-- doxytag: class="RouterOS" --><table border="0" cellpadding="0" cellspacing="0">
+<h1>RouterOS Class Reference</h1><!-- doxytag: class="RouterOS" -->
+<p>Base class for handing <a class="el" href="class_router_o_s.html" title="Base class for handing RouterOS API interface. It implements methods of getting and...">RouterOS</a> API interface. It implements methods of getting and setting values as well restarting router.  
+<a href="#_details">More...</a></p>
+<table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Public Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a931a13f28d65aa79a7371af6100899fd"></a><!-- doxytag: member="RouterOS::setTimeout" ref="a931a13f28d65aa79a7371af6100899fd" args="($timeout=5)" -->
-&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_router_o_s.html#a931a13f28d65aa79a7371af6100899fd">setTimeout</a> ($timeout=5)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Set socket timeout in seconds. Defines how long socket waits for data read/write. <br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_router_o_s.html#a931a13f28d65aa79a7371af6100899fd">setTimeout</a> ($timeout=5)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_router_o_s.html#a25f42b2f0b6996c4e6321d01f9530590">getall</a> ($cmd, $proplist=FALSE, $args=array(), $assoc=FALSE, $callback=FALSE)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_router_o_s.html#a0e0b4fda3cc5e9673e018fac6ef3c3e5">set</a> ($cmd, $args=array(), $callback=FALSE)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_router_o_s.html#a41e64a5332b4782278cd1b5577a02052">reboot</a> ()</td></tr>
@@ -73,8 +74,30 @@ window.onload = initDynSections;
 <tr><td colspan="2"><h2>Data Fields</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0dcc7cc33d87e19752c00558119b908f"></a><!-- doxytag: member="RouterOS::$readOnly" ref="a0dcc7cc33d87e19752c00558119b908f" args="" -->
 &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_router_o_s.html#a0dcc7cc33d87e19752c00558119b908f">$readOnly</a> = FALSE</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Read-only flag. If set to TRUE: <a class="el" href="class_router_o_s.html">RouterOS</a> class will not change nor remove any item. <br/></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Read-only flag. If set to TRUE: <a class="el" href="class_router_o_s.html" title="Base class for handing RouterOS API interface. It implements methods of getting and...">RouterOS</a> class will not change nor remove any item. <br/></td></tr>
 </table>
+<hr/><a name="_details"></a><h2>Detailed Description</h2>
+<p>Base class for handing <a class="el" href="class_router_o_s.html" title="Base class for handing RouterOS API interface. It implements methods of getting and...">RouterOS</a> API interface. It implements methods of getting and setting values as well restarting router. </p>
+<dl class="author"><dt><b>Author:</b></dt><dd>ayufan </dd></dl>
+<dl class="user"><dt><b>Subversion:</b></dt><dd><a href="https://svn.osk-net.pl/rosapi/trunk">https://svn.osk-net.pl/rosapi/trunk</a> </dd></dl>
+<dl class="user"><dt><b>License:</b></dt><dd>GPL: <a href="http://www.gnu.org/licenses/gpl.html">http://www.gnu.org/licenses/gpl.html</a> </dd></dl>
+<dl class="remark"><dt><b>Remarks:</b></dt><dd>All commands accepts two forms of arguments. Either using string or using array. Prefered way is to use array. <a class="anchor" id="cmd"></a> </dd></dl>
+<dl class="user"><dt><b>Commands:</b></dt><dd><div class="fragment"><pre class="fragment"> /ip/firewall/filter 
+</pre></div> <div class="fragment"><pre class="fragment"> array(<span class="stringliteral">&quot;ip&quot;</span>, <span class="stringliteral">&quot;firewall&quot;</span>, <span class="stringliteral">&quot;filter&quot;</span>) 
+</pre></div> <a class="anchor" id="args"></a> </dd></dl>
+<dl class="user"><dt><b>Arguments:</b></dt><dd><div class="fragment"><pre class="fragment"> chain=forward action=drop in-interface=ether1 
+</pre></div> <div class="fragment"><pre class="fragment"> array(<span class="stringliteral">&quot;chain&quot;</span>=&gt;<span class="stringliteral">&quot;forward&quot;</span>, <span class="stringliteral">&quot;action&quot;</span>=&gt;<span class="stringliteral">&quot;drop&quot;</span>, <span class="stringliteral">&quot;in-interface&quot;</span>=&gt;<span class="stringliteral">&quot;ether1&quot;</span>) 
+</pre></div> <a class="anchor" id="callback"></a> </dd></dl>
+<dl class="user"><dt><b>Callbacks:</b></dt><dd><div class="fragment"><pre class="fragment"> function myCallbackFunction($conn, $state, $results); 
+</pre></div> </dd></dl>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>conn</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html" title="Base class for handing RouterOS API interface. It implements methods of getting and...">RouterOS</a> object </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>state</em>&nbsp;</td><td>indicate callback boolean state. TRUE the response is either "!done" or "!re". FALSE the response is "!trap" </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>results</em>&nbsp;</td><td>contains additional arguments for response. If NULL callback got "!done" status otherwise contains associative array of results from API server. </td></tr>
+  </table>
+  </dd>
+</dl>
 <hr/><h2>Member Function Documentation</h2>
 <a class="anchor" id="a0d372c64fd45af1fb0df0a796497e8d3"></a><!-- doxytag: member="RouterOS::add" ref="a0d372c64fd45af1fb0df0a796497e8d3" args="($cmd, $args=array(), $callback=FALSE)" -->
 <div class="memitem">
@@ -107,10 +130,11 @@ window.onload = initDynSections;
 </div>
 <div class="memdoc">
 <p>Add an new item for command. </p>
-<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_router_o_s.html#a25f42b2f0b6996c4e6321d01f9530590">getall</a> </dd></dl>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>id</em>&nbsp;</td><td>item index to move </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>cmd</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#cmd">cmd</a> </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>args</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#args">args</a> </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>callback</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#callback">callback</a> </td></tr>
   </table>
   </dd>
 </dl>
@@ -122,6 +146,8 @@ window.onload = initDynSections;
   </table>
   </dd>
 </dl>
+<dl class="user"><dt><b>Usage</b></dt><dd><div class="fragment"><pre class="fragment"> $conn-&gt;add(<span class="stringliteral">&quot;/ip/firewall/filter&quot;</span>, <span class="stringliteral">&quot;chain=forward action=drop&quot;</span>); 
+</pre></div> </dd></dl>
 
 </div>
 </div>
@@ -162,11 +188,11 @@ window.onload = initDynSections;
 </div>
 <div class="memdoc">
 <p>Perform a bandwidth-test. Supports only transmit and it should be used as asynchronous command, ie. callback. </p>
-<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_router_o_s.html#a25f42b2f0b6996c4e6321d01f9530590">getall</a> </dd></dl>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>address</em>&nbsp;</td><td>ip address or dns name </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>protocol</em>&nbsp;</td><td>udp[:packet_size] or tcp </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>callback</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#callback">callback</a> </td></tr>
   </table>
   </dd>
 </dl>
@@ -207,6 +233,7 @@ window.onload = initDynSections;
 <p>Cancel last or tagged command </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>callback</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#callback">callback</a> </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>tag</em>&nbsp;</td><td>callback index for cancel </td></tr>
   </table>
   </dd>
@@ -263,7 +290,7 @@ window.onload = initDynSections;
       </table>
 </div>
 <div class="memdoc">
-<p>Connects to new MikroTik <a class="el" href="class_router_o_s.html">RouterOS</a> </p>
+<p>Connects to new MikroTik <a class="el" href="class_router_o_s.html" title="Base class for handing RouterOS API interface. It implements methods of getting and...">RouterOS</a> </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>host</em>&nbsp;</td><td>ip address or dns name </td></tr>
@@ -273,7 +300,9 @@ window.onload = initDynSections;
   </table>
   </dd>
 </dl>
-<dl class="return"><dt><b>Returns:</b></dt><dd><a class="el" href="class_router_o_s.html">RouterOS</a> class object </dd></dl>
+<dl class="return"><dt><b>Returns:</b></dt><dd><a class="el" href="class_router_o_s.html" title="Base class for handing RouterOS API interface. It implements methods of getting and...">RouterOS</a> class object </dd></dl>
+<dl class="user"><dt><b>Usage</b></dt><dd><div class="fragment"><pre class="fragment"> $conn = <a class="code" href="class_router_o_s.html#a175fbb3e8b62024976a6ce8f8d221b70">RouterOS::connect</a>(<span class="stringliteral">&quot;192.168.10.11&quot;</span>, <span class="stringliteral">&quot;admin&quot;</span>, <span class="stringliteral">&quot;adminpassword&quot;</span>); 
+</pre></div> </dd></dl>
 
 </div>
 </div>
@@ -305,6 +334,8 @@ window.onload = initDynSections;
   </table>
   </dd>
 </dl>
+<dl class="user"><dt><b>Usage</b></dt><dd><div class="fragment"><pre class="fragment"> $continue = TRUE; $conn-&gt;dispatch($continue); 
+</pre></div> </dd></dl>
 
 </div>
 </div>
@@ -332,10 +363,11 @@ window.onload = initDynSections;
       </table>
 </div>
 <div class="memdoc">
-<p>Uses /tool/fetch to download file from remote server. It can be used for example to fetch latest <a class="el" href="class_router_o_s.html">RouterOS</a> releases. </p>
+<p>Uses /tool/fetch to download file from remote server. It can be used for example to fetch latest <a class="el" href="class_router_o_s.html" title="Base class for handing RouterOS API interface. It implements methods of getting and...">RouterOS</a> releases. </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>url</em>&nbsp;</td><td><a href="http://66.228.113.58/routeros-mipsbe-4.3.npk">http://66.228.113.58/routeros-mipsbe-4.3.npk</a> </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>url</em>&nbsp;</td><td>e.g. <a href="http://66.228.113.58/routeros-mipsbe-4.3.npk">http://66.228.113.58/routeros-mipsbe-4.3.npk</a> </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>callback</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#callback">callback</a> </td></tr>
   </table>
   </dd>
 </dl>
@@ -346,6 +378,8 @@ window.onload = initDynSections;
   </table>
   </dd>
 </dl>
+<dl class="user"><dt><b>Usage</b></dt><dd><div class="fragment"><pre class="fragment"> $conn-&gt;fetchurl(<span class="stringliteral">&quot;http://66.228.113.58/routeros-mipsbe-4.3.npk&quot;</span>); 
+</pre></div> </dd></dl>
 
 </div>
 </div>
@@ -384,6 +418,7 @@ window.onload = initDynSections;
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>id</em>&nbsp;</td><td>index of wireless interface </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>callback</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#callback">callback</a> </td></tr>
   </table>
   </dd>
 </dl>
@@ -443,9 +478,9 @@ window.onload = initDynSections;
 <p>Get all values for specified command </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>cmd</em>&nbsp;</td><td>name of command (string or array) </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>cmd</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#cmd">cmd</a> </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>proplist</em>&nbsp;</td><td>list of values to get (string comma delimeted or array) </td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>args</em>&nbsp;</td><td>additional argument, ie. queries (string space delimeted or associative array) </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>args</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#args">args</a> </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>assoc</em>&nbsp;</td><td>name of associative key </td></tr>
   </table>
   </dd>
@@ -457,6 +492,10 @@ window.onload = initDynSections;
   </table>
   </dd>
 </dl>
+<dl class="user"><dt><b>Usage</b></dt><dd><div class="fragment"><pre class="fragment"> $conn-&gt;getall(<span class="stringliteral">&quot;/interface/wireless/registration-table&quot;</span>); 
+</pre></div> <div class="fragment"><pre class="fragment"> $conn-&gt;getall(<span class="stringliteral">&quot;/interface/wireless/registration-table&quot;</span>, <span class="stringliteral">&quot;.id,interface,mac-address&quot;</span>, FALSE, <span class="stringliteral">&quot;mac-address&quot;</span>); 
+</pre></div> <div class="fragment"><pre class="fragment"> $conn-&gt;getall(array(<span class="stringliteral">&quot;interface&quot;</span>, <span class="stringliteral">&quot;wireless&quot;</span>, <span class="stringliteral">&quot;registration-table&quot;</span>), array(<span class="stringliteral">&quot;.id&quot;</span>, <span class="stringliteral">&quot;interface&quot;</span>, <span class="stringliteral">&quot;mac-address&quot;</span>), FALSE, <span class="stringliteral">&quot;mac-address&quot;</span>); 
+</pre></div> </dd></dl>
 
 </div>
 </div>
@@ -500,6 +539,7 @@ window.onload = initDynSections;
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>id</em>&nbsp;</td><td>item index to move </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>callback</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#callback">callback</a> </td></tr>
   </table>
   </dd>
 </dl>
@@ -510,6 +550,8 @@ window.onload = initDynSections;
   </table>
   </dd>
 </dl>
+<dl class="user"><dt><b>Usage</b></dt><dd><div class="fragment"><pre class="fragment"> $conn-&gt;move(<span class="stringliteral">&quot;/ip/firewall/filter&quot;</span>, <span class="stringliteral">&quot;*5&quot;</span>, <span class="stringliteral">&quot;*10&quot;</span>); 
+</pre></div> </dd></dl>
 
 </div>
 </div>
@@ -527,7 +569,7 @@ window.onload = initDynSections;
       </table>
 </div>
 <div class="memdoc">
-<p>Reboots <a class="el" href="class_router_o_s.html">RouterOS</a> </p>
+<p>Reboots <a class="el" href="class_router_o_s.html" title="Base class for handing RouterOS API interface. It implements methods of getting and...">RouterOS</a> </p>
 <dl><dt><b>Return values:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>boolean</em>&nbsp;</td><td></td></tr>
@@ -572,6 +614,7 @@ window.onload = initDynSections;
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>id</em>&nbsp;</td><td>item or array of items to remove </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>callback</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#callback">callback</a> </td></tr>
   </table>
   </dd>
 </dl>
@@ -582,6 +625,9 @@ window.onload = initDynSections;
   </table>
   </dd>
 </dl>
+<dl class="user"><dt><b>Usage</b></dt><dd><div class="fragment"><pre class="fragment"> $conn-&gt;remove(<span class="stringliteral">&quot;/ip/firewall/filter&quot;</span>, <span class="stringliteral">&quot;*10&quot;</span>); 
+</pre></div> <div class="fragment"><pre class="fragment"> $conn-&gt;remove(<span class="stringliteral">&quot;/ip/firewall/filter&quot;</span>, array(<span class="stringliteral">&quot;*10&quot;</span>, <span class="stringliteral">&quot;*20&quot;</span>)); 
+</pre></div> </dd></dl>
 
 </div>
 </div>
@@ -620,6 +666,7 @@ window.onload = initDynSections;
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>id</em>&nbsp;</td><td>index of wireless interface </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>duration</em>&nbsp;</td><td>how long to scan </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>callback</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#callback">callback</a> </td></tr>
   </table>
   </dd>
 </dl>
@@ -631,6 +678,9 @@ window.onload = initDynSections;
   </table>
   </dd>
 </dl>
+<dl class="user"><dt><b>Usage</b></dt><dd><div class="fragment"><pre class="fragment"> $interfaces = $conn-&gt;getall(<span class="stringliteral">&quot;/interface/wireless&quot;</span>, <span class="stringliteral">&quot;.id,name&quot;</span>, FALSE, <span class="stringliteral">&quot;name&quot;</span>);
+ $results = $conn-&gt;scan($interfaces[<span class="stringliteral">&quot;backbone&quot;</span>][<span class="stringliteral">&quot;.id&quot;</span>]); 
+</pre></div> </dd></dl>
 
 </div>
 </div>
@@ -665,11 +715,45 @@ window.onload = initDynSections;
 </div>
 <div class="memdoc">
 <p>Set item or command value </p>
-<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_router_o_s.html#a25f42b2f0b6996c4e6321d01f9530590">getall</a> </dd></dl>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>cmd</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#cmd">cmd</a> </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>args</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#args">args</a> </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>callback</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#callback">callback</a> </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl><dt><b>Return values:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>integer</em>&nbsp;</td><td>calback index </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>boolean</em>&nbsp;</td><td>command execution status </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="user"><dt><b>Usage</b></dt><dd><div class="fragment"><pre class="fragment"> $conn-&gt;set(<span class="stringliteral">&quot;/ip/firewall/filter&quot;</span>, <span class="stringliteral">&quot;.id=*10 chain=forward action=reject&quot;</span>); 
+</pre></div> </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a931a13f28d65aa79a7371af6100899fd"></a><!-- doxytag: member="RouterOS::setTimeout" ref="a931a13f28d65aa79a7371af6100899fd" args="($timeout=5)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">setTimeout </td>
+          <td>(</td>
+          <td class="paramtype">$&nbsp;</td>
+          <td class="paramname"> <em>timeout</em> = <code>5</code></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Defines how long socket waits for data read/write. </p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>timeout</em>&nbsp;</td><td>Set socket timeout in seconds. </td></tr>
   </table>
   </dd>
 </dl>
@@ -713,9 +797,10 @@ window.onload = initDynSections;
 </div>
 <div class="memdoc">
 <p>Unset value for specified item </p>
-<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_router_o_s.html#a25f42b2f0b6996c4e6321d01f9530590">getall</a> </dd></dl>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>cmd</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#cmd">cmd</a> </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>callback</em>&nbsp;</td><td><a class="el" href="class_router_o_s.html#callback">callback</a> </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>id</em>&nbsp;</td><td>item index </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>value</em>&nbsp;</td><td>what to unset </td></tr>
   </table>
@@ -728,6 +813,8 @@ window.onload = initDynSections;
   </table>
   </dd>
 </dl>
+<dl class="user"><dt><b>Usage</b></dt><dd><div class="fragment"><pre class="fragment"> $conn-&gt;unsett(<span class="stringliteral">&quot;/queue/simple&quot;</span>, <span class="stringliteral">&quot;*10&quot;</span>, <span class="stringliteral">&quot;time&quot;</span>); 
+</pre></div> </dd></dl>
 
 </div>
 </div>

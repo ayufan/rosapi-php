@@ -1,23 +1,38 @@
 <?
 
-/*
-  Author: Kamil Trzcinski
-  E-mail: ayufan(at)osk-net(dot)pl
-  WWW: http://www.ayufan.eu
-  SVN: https://svn.osk-net.pl:444/rosapi (login: guest)
-  License: http://www.gnu.org/licenses/gpl.html
-*/
+//! @brief Base class for handing RouterOS API interface. It implements methods of getting and setting values as well restarting router.
+//! @author ayufan
+//! @par Subversion:
+//! https://svn.osk-net.pl/rosapi/trunk
+//! @par License:
+//! GPL: http://www.gnu.org/licenses/gpl.html
+
+//! @remarks All commands accepts two forms of arguments. Either using string or using array. Prefered way is to use array.
+
+//! @anchor cmd @par Commands:
+//! @code /ip/firewall/filter @endcode
+//! @code array("ip", "firewall", "filter") @endcode
+
+//! @anchor args @par Arguments:
+//! @code chain=forward action=drop in-interface=ether1 @endcode
+//! @code array("chain"=>"forward", "action"=>"drop", "in-interface"=>"ether1") @endcode
+
+//! @anchor callback @par Callbacks:
+//! @code function myCallbackFunction($conn, $state, $results); @endcode
+//! @param conn RouterOS object
+//! @param state indicate callback boolean state. TRUE the response is either "!done" or "!re". FALSE the response is "!trap"
+//! @param results contains additional arguments for response. If NULL callback got "!done" status otherwise contains associative array of results from API server.
 
 class RouterOS
 {
 	private $sock;
 	private $where;
-  
-  private $tags = array();
-  private $tagIndex = 1;
-  private $dispatcher = array();
 	
-  //! Read-only flag. If set to TRUE: RouterOS class will not change nor remove any item.
+	private $tags = array();
+	private $tagIndex = 1;
+	private $dispatcher = array();
+	
+	//! Read-only flag. If set to TRUE: RouterOS class will not change nor remove any item.
 	public $readOnly = FALSE;
 	
 	private function writeSock($cmd = '') {	
@@ -94,12 +109,14 @@ class RouterOS
 		while($this->response() != '!done');
 	}
 
-  //! Connects to new MikroTik RouterOS 
-  //! @param host ip address or dns name
-  //! @param login user login
-  //! @param password user password
-  //! @param port api service port
-  //! @return RouterOS class object
+	//! Connects to new MikroTik RouterOS 
+	//! @param host ip address or dns name
+	//! @param login user login
+	//! @param password user password
+	//! @param port api service port
+	//! @return RouterOS class object
+	//! @par Usage
+	//! @code $conn = RouterOS::connect("192.168.10.11", "admin", "adminpassword"); @endcode
 	static function connect($host, $login, $password, $port = 8728, $timeout = 10) {
 		$self = new RouterOS();
 	
@@ -125,14 +142,15 @@ class RouterOS
 		return NULL;
 	}
 	
-  //! Set socket timeout in seconds. Defines how long socket waits for data read/write.
+	//! Defines how long socket waits for data read/write.
+	//! @param timeout Set socket timeout in seconds. 
 	public function setTimeout($timeout = 5) {
 		return stream_set_timeout($this->sock, $timeout);
 	}
 
 	private function send($cmd, $type, $proplist = FALSE, $args = FALSE, $tag = FALSE) {
-    $result = TRUE;
-    
+		$result = TRUE;
+		
 		if(is_array($cmd))
 			$cmd = '/' . join('/', $cmd);
 		$cmd .= '/' . $type;
@@ -148,72 +166,76 @@ class RouterOS
 		if($proplist)
 			$this->writeSock(".proplist=" . (is_array($proplist) ? join(',', $proplist) : $proplist));
 		if($tag) {
-      if(is_callable($tag)) {
-        $result = $this->tagIndex++;
-        $this->tags[$result] = $tag;
-      }
-      else {
-        $result = $tag;
-      }
-      $this->writeSock(".tag=$result");
-    }
+			if(is_callable($tag)) {
+				$result = $this->tagIndex++;
+				$this->tags[$result] = $tag;
+			}
+			else {
+				$result = $tag;
+			}
+			$this->writeSock(".tag=$result");
+		}
 		$this->writeSock();
-    
-    return $result;
+		
+		return $result;
 	}
 	
 	private function response($args = FALSE, $dispatcher = FALSE) {
-    if($dispatcher && count($this->dispatcher)) {
-      $res = array_shift($this->dispatcher);
-      $args = $res["args"];
-      return $res["type"];
-    }
-    
-    while(true) {
-      $args = array();
-      $type = FALSE;
-      
-      // read response type
-      if($type = $this->readSock()) {
-        if($type[0] != '!') {
-          while($this->readSock());
-          return FALSE;
-        }
-      }
-      
-      // read response parameters
-      while($line = $this->readSock()) {
-        if($line[0] == '=') {
-          $line = explode('=', $line, 3);
-          $args[$line[1]] = count($line) == 3 ? $line[2] : TRUE;
-          continue;
-        }
-        else {
-          $line = explode('=', $line, 2);
-          $args[$line[0]] = isset($line[1]) ? $line[1] : '';
-        }
-      }
-      unset($args['debug-info']);
-      
-      if(isset($args[".tag"])) {
-        if($dispatcher)
-          return $type;
-        $this->dispatcher[] = array("tag" => $args[".tag"], "type" => $type, "args" => $args);
-      }
-      else {
-        return $type;
-      }
-    }
-    return FALSE;
+		if($dispatcher && count($this->dispatcher)) {
+			$res = array_shift($this->dispatcher);
+			$args = $res["args"];
+			return $res["type"];
+		}
+		
+		while(true) {
+			$args = array();
+			$type = FALSE;
+			
+			// read response type
+			if($type = $this->readSock()) {
+				if($type[0] != '!') {
+					while($this->readSock());
+					return FALSE;
+				}
+			}
+			
+			// read response parameters
+			while($line = $this->readSock()) {
+				if($line[0] == '=') {
+					$line = explode('=', $line, 3);
+					$args[$line[1]] = count($line) == 3 ? $line[2] : TRUE;
+					continue;
+				}
+				else {
+					$line = explode('=', $line, 2);
+					$args[$line[0]] = isset($line[1]) ? $line[1] : '';
+				}
+			}
+			unset($args['debug-info']);
+			
+			if(isset($args[".tag"])) {
+				if($dispatcher)
+					return $type;
+				$this->dispatcher[] = array("tag" => $args[".tag"], "type" => $type, "args" => $args);
+			}
+			else {
+				return $type;
+			}
+		}
+		return FALSE;
 	}
 	
-  //! Get all values for specified command
-  //! @param cmd name of command (string or array)
-  //! @param proplist list of values to get (string comma delimeted or array)
-  //! @param args additional argument, ie. queries (string space delimeted or associative array)
-  //! @param assoc name of associative key
-  //! @retval integer callback index
-  //! @retval array results
+	//! Get all values for specified command
+	//! @param cmd @ref cmd
+	//! @param proplist list of values to get (string comma delimeted or array)
+	//! @param args @ref args
+	//! @param assoc name of associative key
+	//! @retval integer callback index
+	//! @retval array results
+	//! @par Usage
+	//! @code $conn->getall("/interface/wireless/registration-table"); @endcode
+	//! @code $conn->getall("/interface/wireless/registration-table", ".id,interface,mac-address", FALSE, "mac-address"); @endcode
+	//! @code $conn->getall(array("interface", "wireless", "registration-table"), array(".id", "interface", "mac-address"), FALSE, "mac-address"); @endcode
 	function getall($cmd, $proplist = FALSE, $args = array(), $assoc = FALSE, $callback = FALSE) {    
 		$res = $this->send($cmd, 'getall', $proplist, $args, $callback);
 
@@ -222,10 +244,10 @@ class RouterOS
 				$proplist = explode(',', $proplist);
 			$proplist = array_fill_keys($proplist, TRUE);
 		}
-    
-    if($callback) {
-      return $res;
-    }
+		
+		if($callback) {
+			return $res;
+		}
 		
 		$ids = array();
 		
@@ -261,19 +283,23 @@ class RouterOS
 		return $ids;
 	}
 	
-  //! Set item or command value
-  //! @see getall
-  //! @retval integer calback index 
-  //! @retval boolean command execution status
+	//! Set item or command value
+	//! @param cmd @ref cmd
+	//! @param args @ref args
+	//! @param callback @ref callback
+	//! @retval integer calback index 
+	//! @retval boolean command execution status
+	//! @par Usage
+	//! @code $conn->set("/ip/firewall/filter", ".id=*10 chain=forward action=reject"); @endcode
 	function set($cmd, $args = array(), $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
 			
 		$res = $this->send($cmd, 'set', FALSE, $args, $callback);
-    
-    if($callback) {
-      return $res;
-    }
+		
+		if($callback) {
+			return $res;
+		}
 		
 		switch($type = $this->response(&$ret)) {
 			case '!done':
@@ -287,9 +313,9 @@ class RouterOS
 				die("set: undefined type\n");
 		}
 	}
-  
-  //! Reboots RouterOS
-  //! @retval boolean
+	
+	//! Reboots RouterOS
+	//! @retval boolean
 	function reboot() {
 		$this->send('/system', 'reboot', FALSE, FALSE);
 
@@ -309,24 +335,25 @@ class RouterOS
 		}
 	}
 	
-  //! Cancel last or tagged command
-  //! @param tag callback index for cancel
-  //! @retval integer callback index
-  //! @retval boolean cancel status
+	//! Cancel last or tagged command
+	//! @param callback @ref callback	
+	//! @param tag callback index for cancel
+	//! @retval integer callback index
+	//! @retval boolean cancel status
 	function cancel($tag = FALSE, $callback = FALSE) {	
-    if(is_callable($tag)) {
-      $tag = array_search($tag, $this->tags);
-      if($tag === FALSE) {
-        echo "cancel: undefined tag\n";
-        return FALSE;
-      }
-    }
-    
+		if(is_callable($tag)) {
+			$tag = array_search($tag, $this->tags);
+			if($tag === FALSE) {
+				echo "cancel: undefined tag\n";
+				return FALSE;
+			}
+		}
+		
 		$res = $this->send('', 'cancel', FALSE, array(".tag" => $tag), FALSE, $callback);
-    
-    if($callback) {
-      return $res;
-    }
+		
+		if($callback) {
+			return $res;
+		}
 		
 		switch($type = $this->response(&$ret)) {
 			case '!done':
@@ -340,21 +367,24 @@ class RouterOS
 				die("set: undefined type\n");
 		}
 	}
-  
-  //! Uses /tool/fetch to download file from remote server. It can be used for example to fetch latest RouterOS releases.
-  //! @param url http://66.228.113.58/routeros-mipsbe-4.3.npk
-  //! @retval integer callback index
-  //! @retval boolean fetch status
+	
+	//! Uses /tool/fetch to download file from remote server. It can be used for example to fetch latest RouterOS releases.
+	//! @param url e.g. http://66.228.113.58/routeros-mipsbe-4.3.npk
+	//! @param callback @ref callback	
+	//! @retval integer callback index
+	//! @retval boolean fetch status
+	//! @par Usage
+	//! @code $conn->fetchurl("http://66.228.113.58/routeros-mipsbe-4.3.npk"); @endcode
 	function fetchurl($url, $callback = FALSE) {
 		$finished = FALSE;
 		
 		echo ".. downloading $url\n";
 
 		$res = $this->send('/tool', 'fetch', FALSE, array('url' => $url), $callback);
-    
-    if($callback) {
-      return $res;
-    }
+		
+		if($callback) {
+			return $res;
+		}
 		
 		while(true) {
 			switch($type = $this->response(&$ret)) {
@@ -402,19 +432,22 @@ class RouterOS
 		return $finished;
 	}
 	
-  //! Move specified item before another item.
-  //! @param id item index to move
-  //! @retval integer callback index
-  //! @retval boolean move status  
+	//! Move specified item before another item.
+	//! @param id item index to move
+	//! @param callback @ref callback
+	//! @retval integer callback index
+	//! @retval boolean move status  
+	//! @par Usage
+	//! @code $conn->move("/ip/firewall/filter", "*5", "*10"); @endcode
 	function move($cmd, $id, $before, $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
 			
 		$res = $this->send($cmd, 'move', FALSE, array('numbers' => $id, 'destination' => $before), $callback);
-    
-    if($callback) {
-      return $res;
-    }
+		
+		if($callback) {
+			return $res;
+		}
 		
 		switch($type = $this->response(&$ret)) {
 			case '!done':
@@ -428,22 +461,25 @@ class RouterOS
 				die("set: undefined type\n");
 		}
 	}
-  
-  //! Add an new item for command.
-  //! @see getall
-  //! @param id item index to move
-  //! @retval integer callback index
-  //! @retval string new item index
-  //! @retval boolean add status
+	
+	//! Add an new item for command.
+	//! @param cmd @ref cmd
+	//! @param args @ref args
+	//! @param callback @ref callback
+	//! @retval integer callback index
+	//! @retval string new item index
+	//! @retval boolean add status
+	//! @par Usage
+	//! @code $conn->add("/ip/firewall/filter", "chain=forward action=drop"); @endcode
 	function add($cmd, $args = array(), $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
 			
 		$res = $this->send($cmd, 'add', FALSE, $args, $callback);
-    
-    if($callback) {
-      return $res;
-    }
+		
+		if($callback) {
+			return $res;
+		}
 		
 		switch($type = $this->response(&$ret)) {
 			case '!done':
@@ -460,20 +496,24 @@ class RouterOS
 		}
 	}
 	
-  //! Remove specified item or array of items for command
-  //! @see getall
-  //! @param id item or array of items to remove
-  //! @retval integer callback index
-  //! @retval boolean remove status
+	//! Remove specified item or array of items for command
+	//! @see getall
+	//! @param id item or array of items to remove
+	//! @param callback @ref callback
+	//! @retval integer callback index
+	//! @retval boolean remove status
+	//! @par Usage
+	//! @code $conn->remove("/ip/firewall/filter", "*10"); @endcode
+	//! @code $conn->remove("/ip/firewall/filter", array("*10", "*20")); @endcode
 	function remove($cmd, $id, $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
 			
 		$res = $this->send($cmd, 'remove', FALSE, array('.id' => is_array($id) ? join(',', $id) : $id), $callback);
-    
-    if($callback) {
-      return $res;
-    }
+		
+		if($callback) {
+			return $res;
+		}
 		
 		switch($type = $this->response(&$ret)) {
 			case '!done':
@@ -487,22 +527,25 @@ class RouterOS
 				die("remove: undefined type\n");
 		}
 	}
-  
-  //! Unset value for specified item
-  //! @see getall
-  //! @param id item index
-  //! @param value what to unset
-  //! @retval integer callback index
-  //! @retval boolean remove status
+	
+	//! Unset value for specified item
+	//! @param cmd @ref cmd
+	//! @param callback @ref callback
+	//! @param id item index
+	//! @param value what to unset
+	//! @retval integer callback index
+	//! @retval boolean remove status
+	//! @par Usage
+	//! @code $conn->unsett("/queue/simple", "*10", "time"); @endcode
 	function unsett($cmd, $id, $value, $callback = FALSE) {
 		if($this->readOnly)
 			return TRUE;
 				
 		$res = $this->send($cmd, 'unset', FALSE, array('numbers' => $id, 'value-name' => $value), $callback);
-    
-    if($callback) {
-      return $res;
-    }
+		
+		if($callback) {
+			return $res;
+		}
 		
 		switch($type = $this->response(&$ret)) {
 			case '!done':
@@ -516,19 +559,23 @@ class RouterOS
 				die("unset: undefined type\n");
 		}
 	}
-  
-  //! Perform a remote wireless scan. Before scanning set stream interval to larger value than duration. 
-  //! @param id index of wireless interface
-  //! @param duration how long to scan
-  //! @retval integer callback index
-  //! @retval array results where key is bssid
-  //! @retval boolean FALSE on error  
+	
+	//! Perform a remote wireless scan. Before scanning set stream interval to larger value than duration. 
+	//! @param id index of wireless interface
+	//! @param duration how long to scan
+	//! @param callback @ref callback
+	//! @retval integer callback index
+	//! @retval array results where key is bssid
+	//! @retval boolean FALSE on error  
+	//! @par Usage
+	//! @code $interfaces = $conn->getall("/interface/wireless", ".id,name", FALSE, "name");
+	//! $results = $conn->scan($interfaces["backbone"][".id"]); @endcode
 	function scan($id, $duration="00:10:00", $callback = FALSE) {
 		$res = $this->send('/interface/wireless', 'scan', FALSE, array('.id' => $id, 'duration' => $duration), $callback);
-    
-    if($callback) {
-      return $res;
-    }
+		
+		if($callback) {
+			return $res;
+		}
 
 		$results = array();
 		
@@ -551,19 +598,20 @@ class RouterOS
 			}
 		}
 	}
-  
-  //! Perform a wireless frequency scanner. Before scanning set stream interval to larger value than duration. 
-  //! @see scan
-  //! @param id index of wireless interface
-  //! @retval integer callback index
-  //! @retval array results where key is frequency
-  //! @retval boolean FALSE on error    
+	
+	//! Perform a wireless frequency scanner. Before scanning set stream interval to larger value than duration. 
+	//! @see scan
+	//! @param id index of wireless interface
+	//! @param callback @ref callback
+	//! @retval integer callback index
+	//! @retval array results where key is frequency
+	//! @retval boolean FALSE on error    
 	function freqmon($id, $duration="00:02:00", $callback = FALSE) {
 		$res = $this->send('/interface/wireless', 'frequency-monitor', FALSE, array('.id' => $id, 'duration' => $duration), $callback);
-    
-    if($callback) {
-      return $res;
-    }
+		
+		if($callback) {
+			return $res;
+		}
 
 		$results = array();
 		
@@ -586,45 +634,45 @@ class RouterOS
 			}
 		}
 	}  
-  
-  //! Perform a bandwidth-test. Supports only transmit and it should be used as asynchronous command, ie. callback. 
-  //! @see getall
-  //! @param address ip address or dns name
-  //! @param protocol udp[:packet_size] or tcp
-  //! @retval integer callback index
-  //! @retval boolean test result    
-  function btest($address, $speed = "1M", $protocol = "tcp", $callback = FALSE) {   
-    list($proto, $count) = explode(":", $protocol, 2);
-    
-    $args = array(
-        "address" => $address,
-        "direction" => "transmit",
-        "local-tx-speed" => $speed);
-        
-    if($proto == "tcp") {
-      $count = min(max(intval($count), 1), 20);
-      $args["protocol"] = "tcp";
-      $args["tcp-connection-count"] = $count;
-    }
-    else if($proto == "udp") {
-      $count = min(max(intval($count), 30), 1500);
-      $args["protocol"] = "udp";
-      $args["local-udp-tx-size"] = $count;
-    }
-    else {
-      die("invalid protocol: $proto\n");
-    }
-    
-    $res = $this->send('/tool', 'bandwidth-test', FALSE, $args, $callback);
-    
-    //echo ".. running btest[$res] to $address ($speed/$protocol)...\n";
-    
-    if($callback) {
-      return $res;
-    }
-        
-    while(true) {
-      $ret = array();
+	
+	//! Perform a bandwidth-test. Supports only transmit and it should be used as asynchronous command, ie. callback. 
+	//! @param address ip address or dns name
+	//! @param protocol udp[:packet_size] or tcp
+	//! @param callback @ref callback
+	//! @retval integer callback index
+	//! @retval boolean test result    
+	function btest($address, $speed = "1M", $protocol = "tcp", $callback = FALSE) {   
+		list($proto, $count) = explode(":", $protocol, 2);
+		
+		$args = array(
+				"address" => $address,
+				"direction" => "transmit",
+				"local-tx-speed" => $speed);
+				
+		if($proto == "tcp") {
+			$count = min(max(intval($count), 1), 20);
+			$args["protocol"] = "tcp";
+			$args["tcp-connection-count"] = $count;
+		}
+		else if($proto == "udp") {
+			$count = min(max(intval($count), 30), 1500);
+			$args["protocol"] = "udp";
+			$args["local-udp-tx-size"] = $count;
+		}
+		else {
+			die("invalid protocol: $proto\n");
+		}
+		
+		$res = $this->send('/tool', 'bandwidth-test', FALSE, $args, $callback);
+		
+		//echo ".. running btest[$res] to $address ($speed/$protocol)...\n";
+		
+		if($callback) {
+			return $res;
+		}
+				
+		while(true) {
+			$ret = array();
 			switch($type = $this->response(&$ret)) {
 				case '!done':
 					return TRUE;
@@ -640,48 +688,50 @@ class RouterOS
 				default:
 					die("btest: undefined type: $type\n");
 			}
-    }
-  }
-  
-  //! Dispatches comming messages from server to functions executed as callbacks.
-  //! @param continue flag to manually break listener loop (it can be done from callback). Initial value should be set to TRUE.
-  //! @retval boolean TRUE if there is one or more pending functions
-  function dispatch(&$continue) {
-    while($continue || count($this->tags)) {
-      switch($type = $this->response(&$ret, TRUE)) {
-        case '!re':
-          if(isset($ret['.tag'])) {
-            $callback = $this->tags[$ret['.tag']];
-            if(is_callable($callback))
-              $callback($this, TRUE, $ret);
-          }
-          break;
-          
-        case '!done':
-          if(isset($ret['.tag'])) {
-            $callback = $this->tags[$ret['.tag']];
-            if(is_callable($callback))
-              call_user_func($callback, $this, TRUE, NULL);
-            unset($this->tags[$ret['.tag']]);
-          }
-          break;
-          
-        case '!trap':
-          if(isset($ret['.tag'])) {
-            $callback = $this->tags[$ret['.tag']];
-            if(is_callable($callback))
-              call_user_func($callback, $this, FALSE, $ret);
-            unset($this->tags[$ret['.tag']]);
-          }
-          break;
-          
-        default:
-          die("dispatch: undefined type\n");
-      }
-    }
-    
-    return count($this->tags) != 0;
-  }
+		}
+	}
+	
+	//! Dispatches comming messages from server to functions executed as callbacks.
+	//! @param continue flag to manually break listener loop (it can be done from callback). Initial value should be set to TRUE.
+	//! @retval boolean TRUE if there is one or more pending functions
+	//! @par Usage
+	//! @code $continue = TRUE; $conn->dispatch($continue); @endcode
+	function dispatch(&$continue) {
+		while($continue || count($this->tags)) {
+			switch($type = $this->response(&$ret, TRUE)) {
+				case '!re':
+					if(isset($ret['.tag'])) {
+						$callback = $this->tags[$ret['.tag']];
+						if(is_callable($callback))
+							$callback($this, TRUE, $ret);
+					}
+					break;
+					
+				case '!done':
+					if(isset($ret['.tag'])) {
+						$callback = $this->tags[$ret['.tag']];
+						if(is_callable($callback))
+							call_user_func($callback, $this, TRUE, NULL);
+						unset($this->tags[$ret['.tag']]);
+					}
+					break;
+					
+				case '!trap':
+					if(isset($ret['.tag'])) {
+						$callback = $this->tags[$ret['.tag']];
+						if(is_callable($callback))
+							call_user_func($callback, $this, FALSE, $ret);
+						unset($this->tags[$ret['.tag']]);
+					}
+					break;
+					
+				default:
+					die("dispatch: undefined type\n");
+			}
+		}
+		
+		return count($this->tags) != 0;
+	}
 };
 
 ?>
