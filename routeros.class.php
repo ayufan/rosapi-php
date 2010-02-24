@@ -719,7 +719,7 @@ class RouterOS
 					break;
 					
 				default:
-					die("dispatch: undefined type\n");
+					die("dispatch: undefined type : $type\n");
 			}
 		}
 		
