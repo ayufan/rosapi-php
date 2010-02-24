@@ -150,6 +150,7 @@ class RouterOS
           $this->writeSock("$value");
         else
           $this->writeSock("=$key=$value");
+      }
 		}
 		if($proplist)
 			$this->writeSock(".proplist=" . (is_array($proplist) ? join(',', $proplist) : $proplist));
