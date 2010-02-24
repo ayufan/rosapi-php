@@ -1,28 +1,13 @@
 <?
 
+//! @class RouterOS
 //! @brief Base class for handing RouterOS API interface. It implements methods of getting and setting values as well restarting router.
 //! @author ayufan
 //! @par Subversion:
 //! https://svn.osk-net.pl/rosapi/trunk
 //! @par License:
 //! GPL: http://www.gnu.org/licenses/gpl.html
-
 //! @remarks All commands accepts two forms of arguments. Either using string or using array. Prefered way is to use array.
-
-//! @anchor cmd @par Commands:
-//! @code /ip/firewall/filter @endcode
-//! @code array("ip", "firewall", "filter") @endcode
-
-//! @anchor args @par Arguments:
-//! @code chain=forward action=drop in-interface=ether1 @endcode
-//! @code array("chain"=>"forward", "action"=>"drop", "in-interface"=>"ether1") @endcode
-
-//! @anchor callback @par Callbacks:
-//! @code function myCallbackFunction($conn, $state, $results); @endcode
-//! @param conn RouterOS object
-//! @param state indicate callback boolean state. TRUE the response is either "!done" or "!re". FALSE the response is "!trap"
-//! @param results contains additional arguments for response. If NULL callback got "!done" status otherwise contains associative array of results from API server.
-
 class RouterOS
 {
 	private $sock;
@@ -160,8 +145,11 @@ class RouterOS
 		// send command & args
 		$this->writeSock($cmd);
 		if($args) {
-			foreach($args as $key=>$value)
-				$this->writeSock("=$key=". $value);
+			foreach($args as $key=>$value) {
+        if(is_int($key))
+          $this->writeSock("$value");
+        else
+          $this->writeSock("=$key=$value");
 		}
 		if($proplist)
 			$this->writeSock(".proplist=" . (is_array($proplist) ? join(',', $proplist) : $proplist));
@@ -633,7 +621,11 @@ class RouterOS
 					die("scan: undefined type: $type\n");
 			}
 		}
-	}  
+	}
+  
+  function listen($cmd, $args = FALSE, $callback) {
+    return $this->send($cmd, 'listen', FALSE, $args, $callback);
+  }
 	
 	//! Perform a bandwidth-test. Supports only transmit and it should be used as asynchronous command, ie. callback. 
 	//! @param address ip address or dns name
@@ -734,4 +726,20 @@ class RouterOS
 	}
 };
 
+//! @defgroup test Test section
+//! @{
+//! @anchor cmd @par Commands:
+//! @code /ip/firewall/filter @endcode
+//! @code array("ip", "firewall", "filter") @endcode
+
+//! @anchor args @par Arguments:
+//! @code chain=forward action=drop in-interface=ether1 @endcode
+//! @code array("chain"=>"forward", "action"=>"drop", "in-interface"=>"ether1") @endcode
+
+//! @anchor callback @par Callbacks:
+//! @code function myCallbackFunction($conn, $state, $results); @endcode
+//! @param conn RouterOS object
+//! @param state indicate callback boolean state. TRUE the response is either "!done" or "!re". FALSE the response is "!trap"
+//! @param results contains additional arguments for response. If NULL callback got "!done" status otherwise contains associative array of results from API server.
+//! @}
 ?>
