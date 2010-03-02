@@ -492,6 +492,8 @@ class RouterOSParser
 		$results = $conn->getall($section['cmd']);
 		if(!$results)
 			return FALSE;
+			
+		$removeList = array();
 
 		foreach($results as $index => $args) {	
 			if(!isset($args['.id']))
@@ -526,7 +528,8 @@ class RouterOSParser
 			$id = $this->matchConfigList($conn, $section, $args, $newList, $dynamic);
 			if($id == 'dynamic') {
 				$this->printValues("remove_dynamic", $args);
-				$conn->remove($section['cmd'], $args['.id']);
+				$removeList[] = $args['.id'];
+				//$conn->remove($section['cmd'], $args['.id']);
 			}
 			// found add to reorder list
 			else if($id) {
@@ -538,8 +541,13 @@ class RouterOSParser
 					continue;
 					
 				$this->printValues("remove", $args);
-				$conn->remove($section['cmd'], $args['.id']);
+				$removeList[] = $args['.id'];
+				//$conn->remove($section['cmd'], $args['.id']);
 			}
+		}
+		
+		if($removeList) {
+			$conn->remove($section['cmd'], $removeList);
 		}
 		
 		return $reorderList;
