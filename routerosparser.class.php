@@ -95,7 +95,7 @@ class RouterOSParser
 		}
 	}
 	
-	function config($cmd, $line, $explode = FALSE) {
+	function config($cmd, $line, $explode = FALSE, $reverse = FALSE) {
 		if(!isset($this->sectionList[$cmd]))
 			$this->error("add : $cmd : section doesn't exist!"); 
 			
@@ -123,7 +123,11 @@ class RouterOSParser
 				return TRUE;
 			}
 		}
-		$config[] = $args;
+		
+		if($reverse)
+			array_unshift($config, $args);
+		else
+			$config[] = $args;
 		return TRUE;
 	}
 	
