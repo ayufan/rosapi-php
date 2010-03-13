@@ -119,7 +119,10 @@ class RouterOSParser
 				$hash .= $args[$key];
 			}
 			if($hash) {
-				$config[$hash] = $args;
+				if($config && $reverse)
+					$config = array($hash=>$args) + $config;
+				else
+					$config[$hash] = $args;
 				return TRUE;
 			}
 		}
