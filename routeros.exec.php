@@ -81,15 +81,36 @@ $parser->define('major', $major);
 $parser->define('arch', $resource['architecture-name']);
 $parser->define('board', $resource['board-name']);
 
-function acl($parser, $address, $comment, $interface='all') { 
-	$parser->config('wireless-access-list', array('mac-address' => strtoupper($address), 'comment' => $comment, 'interface' => $interface));
+function convertToMac($mac) {	// tylko cyfry
+	$mac = strtoupper($mac);
+	if(!$mac)
+		return $mac;
+	if (preg_match("/^([0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}+)$/", $mac))
+		return $mac;
+	if (preg_match("/^([0-9A-F]{12})$/", $mac))
+		return join(':', str_split($mac, 2));
+	else
+		return false;
 }
-$parser->section('wireless-access-list', '/interface/wireless/access-list', 'addset_order', 'mac-address,interface');
+
+function acl($parser, $address) { 
+	if(!$address)
+		$parser->error("no address specified");
+	$arr = func_get_args();
+	$parser = array_shift($arr);
+	$address = array_shift($arr);
+	$address2 = convertToMac($address);
+	$comment = join(' ', $arr);
+	if(!$address2)
+		$parser->error("invalid mac-address specified : $address");
+	$parser->config('wireless-access-list', array('mac-address' => $address2, 'comment' => $comment, 'interface' => 'all'));
+}
+$parser->section('wireless-access-list', '/interface/wireless/access-list', 'addset', 'mac-address,interface');
 $parser->cmd('acl', acl);
 
 // parse and update config
 $parser->parseFile($file) or die("couldn't parse file\n");
 $conn->readOnly = isset($opts['r']);
-echo $parser->update($conn, true);
+echo $parser->update($conn, true) . "\n";
 
 ?>

@@ -202,7 +202,8 @@ class RouterOSParser
 			$line = trim($line);
 			if($line[0] == '#' || $line == '')
 				continue;
-				
+
+			++$lineno;
 			$this->currentContext = "$file($lineno)";
 			
 			list($cmd, $line) = RouterOSParser::splitLine($line, 2);
