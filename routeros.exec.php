@@ -35,7 +35,7 @@ function getopt_($params) {
 
 // parse args
 $opts = getopt_(array("h" => 2, "f" => 2, "l" => 1,
-		"p" => 1, "P" => 1, "v" => 0,
+		"p" => 1, "P" => 1, "v" => 0, "i" => 1,
 		"r" => 0));
 	
 if(!$opts || $opts['v']) {
@@ -46,6 +46,7 @@ if(!$opts || $opts['v']) {
 	echo " -p [password]\n";
 	echo " -P [password from file]\n";
 	echo " -f [file] (*)\n";
+	echo " -i [file.php] : include another file (has access to \$parser)\n";
 	echo " -r : read only\n";
 	echo " -v : this help\n";
 	exit(1);
@@ -61,6 +62,7 @@ $port = intval($port);
 $file = $opts['f'];
 $login = $opts['l'] ? $opts['l'] : "admin";
 $password = $opts['P'] ? file_get_contents($opts['P']) : $opts['p'];
+$include = $opts['i'] ? $opts['i'] : FALSE;
 
 // connect to router
 echo "-- $login@$host -- \n";
@@ -81,32 +83,9 @@ $parser->define('major', $major);
 $parser->define('arch', $resource['architecture-name']);
 $parser->define('board', $resource['board-name']);
 
-function convertToMac($mac) {	// tylko cyfry
-	$mac = strtoupper($mac);
-	if(!$mac)
-		return $mac;
-	if (preg_match("/^([0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}+)$/", $mac))
-		return $mac;
-	if (preg_match("/^([0-9A-F]{12})$/", $mac))
-		return join(':', str_split($mac, 2));
-	else
-		return false;
+if($include) {
+	require_once($include);
 }
-
-function acl($parser, $address) { 
-	if(!$address)
-		$parser->error("no address specified");
-	$arr = func_get_args();
-	$parser = array_shift($arr);
-	$address = array_shift($arr);
-	$address2 = convertToMac($address);
-	$comment = join(' ', $arr);
-	if(!$address2)
-		$parser->error("invalid mac-address specified : $address");
-	$parser->config('wireless-access-list', array('mac-address' => $address2, 'comment' => $comment, 'interface' => 'all'));
-}
-$parser->section('wireless-access-list', '/interface/wireless/access-list', 'addset', 'mac-address,interface');
-$parser->cmd('acl', acl);
 
 // parse and update config
 $parser->parseFile($file) or die("couldn't parse file\n");
