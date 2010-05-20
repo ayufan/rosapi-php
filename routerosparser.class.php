@@ -177,10 +177,10 @@ class RouterOSParser
 		switch($op) {
 		case '=':			return $this->vars[$v] == $b;
 		case '!=':			return $this->vars[$v] != $b;
-		case '<':			return $this->vars[$v] < $b;
-		case '>':			return $this->vars[$v] > $b;
-		case '<=':			return $this->vars[$v] <= $b;
-		case '>=':			return $this->vars[$v] >= $b;
+		case '<':			return doubleval($this->vars[$v]) < doubleval($b);
+		case '>':			return doubleval($this->vars[$v]) > doubleval($b);
+		case '<=':			return doubleval($this->vars[$v]) <= doubleval($b);
+		case '>=':			return doubleval($this->vars[$v]) >= doubleval($b);
 		case '~=':			return fnmatch($b, $this->vars[$v]);
 		case '!~=':			return !fnmatch($b, $this->vars[$v]);
 		default:
