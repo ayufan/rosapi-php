@@ -19,6 +19,10 @@ class RouterOS
 	
 	//! Read-only flag. If set to TRUE: RouterOS class will not change nor remove any item.
 	public $readOnly = FALSE;
+
+	function __destruct() {
+		@fclose($this->sock);
+	}
 	
 	private function writeSock($cmd = '') {	
 		//if(strlen($cmd) == 0)
