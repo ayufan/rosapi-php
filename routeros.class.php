@@ -269,7 +269,8 @@ class RouterOS
 					break 2;
 					
 				default:
-					die("getall: undefined type=$type\n");
+					echo("getall: undefined type=$type\n");
+					return FALSE;
 			}
 		}
 		
@@ -303,7 +304,8 @@ class RouterOS
 				return FALSE;
 				
 			default:
-				die("set: undefined type\n");
+				echo("set: undefined type\n");
+				return FALSE;
 		}
 	}
 	
@@ -357,7 +359,8 @@ class RouterOS
 				return FALSE;
 				
 			default:
-				die("set: undefined type\n");
+				echo("set: undefined type\n");
+				return FALSE;
 		}
 	}
 	
@@ -413,12 +416,14 @@ class RouterOS
 							break;
 							
 						default:
-							die("fetch: undefined response (${ret['status']})\n");
+							echo("fetch: undefined response (${ret['status']})\n");
+							return FALSE;
 					}
 					break;
 					
 				default:
-					die("fetch: undefined type\n");
+					echo("fetch: undefined type\n");
+					return FALSE;
 			} 
 			flush();
 		}
@@ -451,7 +456,8 @@ class RouterOS
 				return FALSE;
 				
 			default:
-				die("set: undefined type\n");
+				echo("set: undefined type\n");
+				return FALSE;
 		}
 	}
 	
@@ -485,7 +491,8 @@ class RouterOS
 				return FALSE;
 				
 			default:
-				die("set: undefined type\n");
+				echo("set: undefined type\n");
+				return FALSE;
 		}
 	}
 	
@@ -517,7 +524,8 @@ class RouterOS
 				return FALSE;
 				
 			default:
-				die("remove: undefined type\n");
+				echo("remove: undefined type\n");
+				return FALSE;
 		}
 	}
 	
@@ -549,7 +557,8 @@ class RouterOS
 				return FALSE;
 				
 			default:
-				die("unset: undefined type\n");
+				echo("unset: undefined type\n");
+				return FALSE;
 		}
 	}
 	
@@ -587,7 +596,8 @@ class RouterOS
 					return FALSE;
 					
 				default:
-					die("scan: undefined type: $type\n");
+					echo("scan: undefined type: $type\n");
+					return FALSE;
 			}
 		}
 	}
@@ -623,7 +633,8 @@ class RouterOS
 					return FALSE;
 					
 				default:
-					die("scan: undefined type: $type\n");
+					echo("scan: undefined type: $type\n");
+					return FALSE;
 			}
 		}
 	}
@@ -657,7 +668,8 @@ class RouterOS
 			$args["local-udp-tx-size"] = $count;
 		}
 		else {
-			die("invalid protocol: $proto\n");
+			echo("invalid protocol: $proto\n");
+			return FALSE;
 		}
 		
 		$res = $this->send('/tool', 'bandwidth-test', FALSE, $args, $callback);
@@ -683,7 +695,8 @@ class RouterOS
 					return FALSE;
 					
 				default:
-					die("btest: undefined type: $type\n");
+					echo("btest: undefined type: $type\n");
+					return FALSE;
 			}
 		}
 	}
@@ -723,7 +736,8 @@ class RouterOS
 					break;
 					
 				default:
-					die("dispatch: undefined type : $type\n");
+					echo("dispatch: undefined type : $type\n");
+					return FALSE;
 			}
 		}
 		
