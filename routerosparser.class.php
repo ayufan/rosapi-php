@@ -720,6 +720,5 @@ class RouterOSParser {
                 echo "\n";
         }
     }
-}
-;
+};
 ?>
