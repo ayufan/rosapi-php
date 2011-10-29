@@ -176,10 +176,13 @@ class RouterOSParser {
             $this->error("section : $alias : section already exist");
         if(!$cmd || !$type)
             $this->error("section : $alias : undefined cmd and/or type");
+	$args = explode(",", $type);
+	$type = array_shift($args);
+	$args = array_fill_keys($args, "");
         if(!in_array($type, array('value', 'set', 'addset', 'addset_order')))
             $this->error("section : $alias : invalid type");
 
-        $section = array('cmd' => $cmd, 'type' => $type);
+        $section = array('cmd' => $cmd, 'type' => $type, 'args' => $args);
         if($keys && $keys != 'false')
             $section['keys'] = array_fill_keys(explode(',', $keys), TRUE);
         if($defaults)
@@ -426,7 +429,7 @@ class RouterOSParser {
         if(!$newArgs)
             return array();
         foreach($newArgs as $key => $value) {
-            if($value != 'false')
+            if($value != 'false' && $value != '')
                 continue;
             if(!isset($oldArgs[$key]))
                 $oldArgs[$key] = $value;
@@ -440,7 +443,7 @@ class RouterOSParser {
             $newList = array_merge($defaults, $newList);
 
         // get current config
-        $oldList = $conn->getall($section['cmd']);
+        $oldList = $conn->getall($section['cmd'], FALSE, $section['args']);
         if(!$oldList)
             return TRUE;
 
@@ -517,7 +520,7 @@ class RouterOSParser {
         // oraz je przesuwajac w odpowiednie miejsce
         // aby zachowac okreslona kolejnosc
 
-        $results = $conn->getall($section['cmd']);
+        $results = $conn->getall($section['cmd'], FALSE, $section['args']);
         if(!$results)
             return FALSE;
 
