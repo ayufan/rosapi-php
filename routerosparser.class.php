@@ -285,6 +285,12 @@ class RouterOSParser {
                     $this->config($cmd, $line);
                     break;
 
+                case 'addr':
+                    // extract cmd and values
+                    list($cmd, $line) = RouterOSParser::splitLine($line, 2);
+                    $this->config($cmd, $line, TRUE);
+                    break;
+
                 // function <function> <arg0> <arg1=value1> ...
                 // ...
                 // endfunction
