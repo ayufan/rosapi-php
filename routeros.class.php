@@ -24,6 +24,37 @@ class RouterOS
 		@fclose($this->sock);
 	}
 	
+	private function fread_secure($sock, $size) {
+	    $data = '';
+	    while(strlen($data) < $size) {
+	        $rv = fread($sock, $size - strlen($data));
+	        if($rv === false || $rv == '')
+	            return false;
+	        $data .= $rv;
+	    }
+	
+	    return $data;
+	}
+	
+	private function fwrite_secure($sock, $data) {
+	    $bytes_to_write = strlen($data);
+	    $bytes_written = 0;
+	
+	    while($bytes_written < $bytes_to_write) {
+	        if($bytes_written == 0)
+	            $rv = fwrite($sock, $data);
+	        else
+	            $rv = fwrite($sock, substr($data, $bytes_written));
+	            
+	        if($rv === false || $rv == 0)
+	            return $bytes_written == 0 ? false : $bytes_written;
+	            
+	        $bytes_written += $rv;
+	    }
+	
+	    return $bytes_written;
+	}
+	
 	private function writeSock($cmd = '') {	
 		//if(strlen($cmd) == 0)
 		//	echo "<<< ---\n";
@@ -32,51 +63,51 @@ class RouterOS
 		
 		$l = strlen($cmd);
 		if($l < 0x80) {
-			fwrite($this->sock, chr($l));
+			$this->fwrite_secure($this->sock, chr($l));
 		}
 		else if($l < 0x4000) {
 			$l |= 0x8000;
-			fwrite($this->sock, chr(($l >> 8) & 0xFF) . chr($l & 0xFF));
+			$this->fwrite_secure($this->sock, chr(($l >> 8) & 0xFF) . chr($l & 0xFF));
 		}	
 		else if($l < 0x200000) {
 			$l |= 0xC00000;
-			fwrite($this->sock, chr(($l >> 16) & 0xFF) . chr(($l >> 8) & 0xFF) . chr($l & 0xFF));
+			$this->fwrite_secure($this->sock, chr(($l >> 16) & 0xFF) . chr(($l >> 8) & 0xFF) . chr($l & 0xFF));
 		}
 		else if($l < 0x10000000) {
 			$l |= 0xE0000000;
-			fwrite($this->sock, chr(($l >> 24) & 0xFF) . chr(($l >> 16) & 0xFF) . chr(($l >> 8) & 0xFF) . chr($l & 0xFF));
+			$this->fwrite_secure($this->sock, chr(($l >> 24) & 0xFF) . chr(($l >> 16) & 0xFF) . chr(($l >> 8) & 0xFF) . chr($l & 0xFF));
 		}
 		else {
-			fwrite($this->sock, chr(0xF0) . chr(($l >> 24) & 0xFF) . chr(($l >> 16) & 0xFF) . chr(($l >> 8) & 0xFF) . chr($l & 0xFF));
+			$this->fwrite_secure($this->sock, chr(0xF0) . chr(($l >> 24) & 0xFF) . chr(($l >> 16) & 0xFF) . chr(($l >> 8) & 0xFF) . chr($l & 0xFF));
 		}
 		
-		fwrite($this->sock, $cmd);
+		$this->fwrite_secure($this->sock, $cmd);
 	}
 	
 	private function readSock() {
-		$c = ord(fread($this->sock, 1));
+		$c = ord($this->fread_secure($this->sock, 1));
 		if(($c & 0x80) == 0x00) {
 		}
 		else if(($c & 0xC0) == 0x80) {
 			$c &= ~0xC0;
-			$c = ($c << 8) +  ord(fread($this->sock, 1));
+			$c = ($c << 8) +  ord($this->fread_secure($this->sock, 1));
 		}
 		else if(($c & 0xE0) == 0xC0) {
 			$c &= ~0xE0;
-			$c = ($c << 8) +  ord(fread($this->sock, 1));
-			$c = ($c << 8) +  ord(fread($this->sock, 1));
+			$c = ($c << 8) +  ord($this->fread_secure($this->sock, 1));
+			$c = ($c << 8) +  ord($this->fread_secure($this->sock, 1));
 		}
 		else if(($c & 0xF0) == 0xE0) {
 			$c &= ~0xF0;
-			$c = ($c << 8) +  ord(fread($this->sock, 1));
-			$c = ($c << 8) +  ord(fread($this->sock, 1));
-			$c = ($c << 8) +  ord(fread($this->sock, 1));
+			$c = ($c << 8) +  ord($this->fread_secure($this->sock, 1));
+			$c = ($c << 8) +  ord($this->fread_secure($this->sock, 1));
+			$c = ($c << 8) +  ord($this->fread_secure($this->sock, 1));
 		}
 		else {
 			$c = ord(fread($this->sock));
-			$c = ($c << 8) +  ord(fread($this->sock, 1));
-			$c = ($c << 8) +  ord(fread($this->sock, 1));
-			$c = ($c << 8) +  ord(fread($this->sock, 1));
+			$c = ($c << 8) +  ord($this->fread_secure($this->sock, 1));
+			$c = ($c << 8) +  ord($this->fread_secure($this->sock, 1));
+			$c = ($c << 8) +  ord($this->fread_secure($this->sock, 1));
 		}
 		
 		if($c == 0) {
@@ -84,9 +115,7 @@ class RouterOS
 			return NULL;
 		}
 		
-		$o = '';
-		while(strlen($o) < $c)
-			$o .= fread($this->sock, $c - strlen($o));
+		$o = $this->fread_secure($this->sock, $c);
 			
 		//echo ">>> $o\n";	
 		return $o;
