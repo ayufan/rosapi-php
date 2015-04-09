@@ -1,4 +1,4 @@
-<?
+<?php
 
 //! @class RouterOS
 //! @brief Base class for handing RouterOS API interface. It implements methods of getting and setting values as well restarting router.
@@ -145,13 +145,13 @@ class RouterOS
 		
 		// initiate login
 		$self->send('', 'login');
-		$type = $self->response(&$args);
+		$type = $self->response($args);
 		if($type != '!done' || !isset($args['ret']))
 			return NULL;
 					
 		// try to login
 		$self->send('', 'login', FALSE, array('name' => $login, 'response' => '00'.md5(chr(0).$password.pack('H*',$args['ret']))));
-		$type = $self->response(&$args);
+		$type = $self->response($args);
 		if($type == '!done')
 			return $self;
 		else if($type == '!trap')
@@ -202,7 +202,7 @@ class RouterOS
 		return $result;
 	}
 	
-	private function response($args = FALSE, $dispatcher = FALSE) {
+	private function response(&$args = FALSE, $dispatcher = FALSE) {
 		if($dispatcher && count($this->dispatcher)) {
 			$res = array_shift($this->dispatcher);
 			$args = $res["args"];
@@ -276,7 +276,7 @@ class RouterOS
 		// wait for response
 		while(true) {
 			$ret = array();
-			switch($type = $this->response(&$ret)) {
+			switch($type = $this->response($ret)) {
 				case '!re':
 					if($proplist)
 						$ret = array_intersect_key($ret, $proplist);
@@ -324,7 +324,7 @@ class RouterOS
 			return $res;
 		}
 		
-		switch($type = $this->response(&$ret)) {
+		switch($type = $this->response($ret)) {
 			case '!done':
 				return TRUE;
 				
@@ -346,7 +346,7 @@ class RouterOS
 		echo "!! rebooting...\n";
 		sleep(5);
 
-		switch($type = $this->response(&$ret)) {
+		switch($type = $this->response($ret)) {
 			case '!done':
 				return TRUE;
 
@@ -379,7 +379,7 @@ class RouterOS
 			return $res;
 		}
 		
-		switch($type = $this->response(&$ret)) {
+		switch($type = $this->response($ret)) {
 			case '!done':
 				return TRUE;
 				
@@ -412,7 +412,7 @@ class RouterOS
 		}
 		
 		while(true) {
-			switch($type = $this->response(&$ret)) {
+			switch($type = $this->response($ret)) {
 				case '!done':
 					return TRUE;
 					
@@ -476,7 +476,7 @@ class RouterOS
 			return $res;
 		}
 		
-		switch($type = $this->response(&$ret)) {
+		switch($type = $this->response($ret)) {
 			case '!done':
 				return TRUE;
 				
@@ -509,7 +509,7 @@ class RouterOS
 			return $res;
 		}
 		
-		switch($type = $this->response(&$ret)) {
+		switch($type = $this->response($ret)) {
 			case '!done':
 				if(isset($ret['ret']))
 					return $ret['ret'];
@@ -544,7 +544,7 @@ class RouterOS
 			return $res;
 		}
 		
-		switch($type = $this->response(&$ret)) {
+		switch($type = $this->response($ret)) {
 			case '!done':
 				return TRUE;
 				
@@ -577,7 +577,7 @@ class RouterOS
 			return $res;
 		}
 		
-		switch($type = $this->response(&$ret)) {
+		switch($type = $this->response($ret)) {
 			case '!done':
 				return TRUE;
 				
@@ -612,7 +612,7 @@ class RouterOS
 		
 		while(true) {
 			$ret = array();
-			switch($type = $this->response(&$ret)) {
+			switch($type = $this->response($ret)) {
 				case '!done':
 					return $results;
 					
@@ -649,7 +649,7 @@ class RouterOS
 		
 		while(true) {
 			$ret = array();
-			switch($type = $this->response(&$ret)) {
+			switch($type = $this->response($ret)) {
 				case '!done':
 					return $results;
 					
@@ -711,7 +711,7 @@ class RouterOS
 				
 		while(true) {
 			$ret = array();
-			switch($type = $this->response(&$ret)) {
+			switch($type = $this->response($ret)) {
 				case '!done':
 					return TRUE;
 					
@@ -737,7 +737,7 @@ class RouterOS
 	//! @code $continue = TRUE; $conn->dispatch($continue); @endcode
 	function dispatch(&$continue) {
 		while($continue || count($this->tags)) {
-			switch($type = $this->response(&$ret, TRUE)) {
+			switch($type = $this->response($ret, TRUE)) {
 				case '!re':
 					if(isset($ret['.tag'])) {
 						$callback = $this->tags[$ret['.tag']];
